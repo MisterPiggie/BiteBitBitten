@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"go/token"
 	"os"
 	"strconv"
 )
@@ -117,7 +116,7 @@ func indexOf(file []byte, target byte, start int) int {
 	return -1
 }
 
-func (p *Parser) getTorrentFile(data map[string]any) (map[string]any, error) {
+func (p *Parser) getTorrentFile(data map[string]any) (TorrentFile, error) {
 	var torrent TorrentFile
 
 	announce, ok := data["announce"].(string)
@@ -137,39 +136,59 @@ func (p *Parser) getTorrentFile(data map[string]any) (map[string]any, error) {
 	}
 
 	if torrent.Announce == "" && len(torrent.AnnounceList) == 0 {
-		return nil, fmt.Errorf("missing announce")
+		return TorrentFile{}, fmt.Errorf("missing announce")
 	}
 
 	infoMap, ok := data["info"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("missing info map")
+		return TorrentFile{}, fmt.Errorf("missing info map")
 	}
 
-	torrent.Info.Name = infoMap["name"].(string)
+	torrent.Info.Name, ok = infoMap["name"].(string)
+	if !ok {
+		torrent.Info.Name = "no_name_was_provide"
+	}
+
 	torrent.Info.PieceLength, ok = infoMap["piece length"].(int)
 	if !ok {
-		return nil, fmt.Errorf("missing piece length")
+		return TorrentFile{}, fmt.Errorf("missing piece length")
 	}
 	torrent.Info.Pieces = []byte(infoMap["pieces"].(string))
-	if len(token.Info.Pieces) == 0 {
-		return nil, fmt.Errorf("missing pieces slice")
+	if len(torrent.Info.Pieces) == 0 {
+		return TorrentFile{}, fmt.Errorf("missing pieces slice")
 	}
 
-	torrent.Info.Length, ok = infoMap["length"].(int) 
-	if !ok {
-		files, ok := infoMap["files"].([]any)
-		if ok {
-			for _, file := range files {
-				fileMap := file.(map[string]any)
-				f := File{
-					Length: fileMap["length"].(int),
-				}
-				for _, p := range fileMap["path"].([]any) {
-					file.Path = append(file.Path, p.(string))
-				}
-				info
+	length, ok := infoMap["length"].(int) 
+	if ok {
+		torrent.Info.Files = []File{File{
+			Length: length,
+			Path: []string{torrent.Info.Name},
+		}}
+	} else if files, ok := infoMap["files"].([]any); ok {
+		for _, file := range files {
+			fileMap := file.(map[string]any)
+			f := File{
+				Length: fileMap["length"].(int),
+			}
+			for _, p := range fileMap["path"].([]any) {
+				f.Path = append(f.Path, p.(string))
+			}
+
+			torrent.Info.Files = append(torrent.Info.Files, f)
+		}
+	} else {
+		return TorrentFile{}, fmt.Errorf("no files provided")
+	}
+
+	torrent.Comment = data["comment"].(string)
+	torrent.CreatedBy= data["created by"].(string)
+	torrent.CreationDate= data["creation date"].(int)
+	torrent.Publisher= data["publisher"].(string)
+	torrent.PublisherURL= data["publisher-url"].(string)
+	return torrent, nil	
 
 
+		
 }
 
 func NewParser() *Parser {
@@ -183,19 +202,28 @@ func main() {
 		return
 	}
 	parser.file = data
-	torrent := parser.decode().(map[string]any)
+	rawData := parser.decode().(map[string]any)
 	if parser.err != nil {
 		return
 	}
-	fmt.Printf("%T\n",torrent["publisher"])
-	fmt.Printf("%T\n",torrent["publisher-url"])
-	fmt.Printf("%T\n",torrent["announce"])
-	fmt.Printf("%v\n",torrent["announce-list"])
-	fmt.Printf("%T\n",torrent["comment"])
-	fmt.Printf("%T\n",torrent["created by"])
-	fmt.Printf("%T\n",torrent["creation date"])
-	fmt.Printf("%T\n",torrent["info"])
-}
 
+	torrent, err := parser.getTorrentFile(rawData)
+	if err != nil {
+		return
+	}
+
+	fmt.Println(torrent.Announce)
+	fmt.Println(torrent.AnnounceList)
+	fmt.Println(torrent.Publisher)
+	fmt.Println(torrent.PublisherURL)
+	fmt.Println(torrent.CreationDate)
+	fmt.Println(torrent.Comment)
+	fmt.Println(torrent.CreatedBy)
+	fmt.Println(torrent.Info.Name)
+	fmt.Println(torrent.Info.PieceLength)
+	fmt.Println(torrent.Info.Pieces)
+	fmt.Println(torrent.Info.Files)
+
+}
 
 
