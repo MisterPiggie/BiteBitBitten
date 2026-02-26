@@ -7,11 +7,24 @@ import (
 	"unsafe"
 )
 
-type TestSubject struct {
-	Name 		string
-	Age 		int
-	Friends		[]string
-	Dict		map[string]string
+type TorrentMeta struct {
+	Announce		string
+	AnnounceList 	[][]string
+	Info			Info
+}
+
+type Info struct {
+	Name		string
+	PieceLength int
+	Pieces		string
+	Priva		int
+	Length 		int
+	Files		[]File
+}
+
+type File struct {
+	Path		[]string
+	Length		int
 }
 
 type BencodeValue struct {
@@ -26,26 +39,4 @@ type fieldDecoder struct {
 	offset 		uintptr
 	decode 		func(unsafe.Pointer, []byte)
 }
-
-func main() {
-	file, err := os.ReadFile("test_data.torrent")
-	if err != nil {
-		return
-	}
-	
-	var testSubject TestSubject
-
-	err := BencodeUnmarshal(file, &testSubject)
-	if err != nil {
-		return
-	}
-}
-
-
-func buildCache(v any) map[string]fieldInfo {
-	t := reflect.TypeOf(v)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-
-
 
