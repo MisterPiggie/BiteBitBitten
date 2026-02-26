@@ -1,9 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"os"
-	"reflect"
 	"unsafe"
 )
 
