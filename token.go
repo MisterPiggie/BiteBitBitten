@@ -83,7 +83,7 @@ func (t *Tokenizer) ReadInt() (int64, error) {
 	
 	t.pos++
 
-	end := bytes.IndexByte(t.data, 'e')
+	end := bytes.IndexByte(t.data[t.pos:], 'e')
 	if end < 0 {
 		return 0, fmt.Errorf("missing 'e' in integer at pos %d", t.pos)
 	}
@@ -93,7 +93,7 @@ func (t *Tokenizer) ReadInt() (int64, error) {
 		return 0, fmt.Errorf("malformed integer at pos %d", t.pos)
 	}
 
-	t.pos = t.pos + end 
+	t.pos += 1 + end 
 	return num, nil
 }
 
@@ -118,7 +118,7 @@ func (t *Tokenizer) ReadEnd() error {
 
 
 func (t *Tokenizer) AtEnd() bool {
-	return t.pos >= len(t.data)
+	return t.pos >= len(t.data) || t.data[t.pos] == 'e'
 }
 
 func decodeStruct(ptr unsafe.Pointer, tok *Tokenizer, cache map[string]fieldDecoder) error {
@@ -135,11 +135,58 @@ func decodeStruct(ptr unsafe.Pointer, tok *Tokenizer, cache map[string]fieldDeco
 
 		c, ok := cache[key]
 		if !ok {
-			t.Skip()
+			tok.Skip()
 			continue
 		}
 
-		fieldPtr
+		fieldPtr := unsafe.Pointer(uintptr(ptr) + c.offset) 
+		err := c.write(fieldPtr, tok)
+		if err != nil {
+			return fmt.Errorf("field %s: %v", key, err)
+		}
+	}
+
+	return tok.ReadEnd()
+}
+
+func (t *Tokenizer) Skip() error {
+	if t.pos > len(t.data) {
+		return fmt.Errorf("unexpected EOF")
+	}
+	switch t.Peek(){
+	case TokenString:
+		colon := bytes.IndexByte(t.data[t.pos:], ':')
+		if colon < 0 {
+			return fmt.Errorf("missing colon in string at %d", t.pos)
+		}
+
+		length, err := strconv.Atoi(string(t.data[t.pos:t.pos+colon]))
+		if err != nil {
+			return fmt.Errorf("malformed string length at %d", t.pos)
+		}
+
+		t.pos += colon + 1 + length
+
+	case TokenInt:
+		t.pos++
+
+		for t.pos < len(t.data) && t.data[t.pos] != 'e' {
+			t.pos++
+		}
+		t.pos++
+	case TokenDict, TokenList:
+		t.pos++
+		for !t.AtEnd(){
+			t.Skip()
+		}
+		t.pos++
+	default:
+		t.pos = len(t.data)
+	}
+
+	return nil
+}
+
 
 
 
