@@ -13,18 +13,12 @@ type TokenKind byte
 
 const (
 	TokenString 	TokenKind = 's'
-	TokenInt		TokenKind = 'i'
 	TokenList		TokenKind = 'l'
+	TokenInt		TokenKind = 'i'
 	TokenDict		TokenKind = 'd'
 	TokenEnd		TokenKind = 'e'
 )
 
-
-type Token struct {
-	Kind 	TokenKind
-	Str 	string
-	Int 	int64
-}
 
 
 type Tokenizer struct {
@@ -77,6 +71,9 @@ func (t *Tokenizer) ReadString() (string, error) {
 }
 
 func (t *Tokenizer) ReadInt() (int64, error) {
+	if t.pos >= len(t.data) {
+        return 0, fmt.Errorf("unexpected EOF at pos %d", t.pos)
+    }
 	if t.data[t.pos] != 'i' {
 		return 0, fmt.Errorf("expected 'i' at pos %d", t.pos)
 	}
@@ -98,6 +95,9 @@ func (t *Tokenizer) ReadInt() (int64, error) {
 }
 
 func (t *Tokenizer) ReadOpen() error {
+	if t.pos >= len(t.data) {
+        return fmt.Errorf("unexpected EOF at pos %d", t.pos)
+    }
 	if t.data[t.pos] != 'l' && t.data[t.pos] != 'd' {
 		return fmt.Errorf("expected 'l' or 'd' at pos %d", t.pos)
 	}
@@ -108,6 +108,9 @@ func (t *Tokenizer) ReadOpen() error {
 
 
 func (t *Tokenizer) ReadEnd() error {
+	if t.pos >= len(t.data) {
+        return fmt.Errorf("unexpected EOF at pos %d", t.pos)
+    }
 	if t.data[t.pos] != 'e' { 
 		return fmt.Errorf("expected 'e' at pos %d", t.pos)
 	}
@@ -140,7 +143,7 @@ func decodeStruct(ptr unsafe.Pointer, tok *Tokenizer, cache map[string]fieldDeco
 		}
 
 		fieldPtr := unsafe.Pointer(uintptr(ptr) + c.offset) 
-		err := c.write(fieldPtr, tok)
+		err = c.write(fieldPtr, tok)
 		if err != nil {
 			return fmt.Errorf("field %s: %v", key, err)
 		}
@@ -150,7 +153,7 @@ func decodeStruct(ptr unsafe.Pointer, tok *Tokenizer, cache map[string]fieldDeco
 }
 
 func (t *Tokenizer) Skip() error {
-	if t.pos > len(t.data) {
+	if t.pos >= len(t.data) {
 		return fmt.Errorf("unexpected EOF")
 	}
 	switch t.Peek(){
@@ -186,21 +189,3 @@ func (t *Tokenizer) Skip() error {
 
 	return nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
