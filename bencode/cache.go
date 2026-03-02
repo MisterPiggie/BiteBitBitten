@@ -1,4 +1,4 @@
-package main
+package bencode
 
 import (
 	"fmt"
@@ -53,7 +53,7 @@ func resolveWriter(t reflect.Type) (func(unsafe.Pointer, *Tokenizer) error, erro
 			if err != nil {
 				return err
 			}
-			*(*int64)(ptr) = int64(num)
+			*(*int)(ptr) = int(num)
 
 			return nil
 		}, nil
@@ -106,7 +106,7 @@ func caseSlice(elem reflect.Type) (func (unsafe.Pointer, *Tokenizer) error, erro
 				return err
 			}
 
-			var result []int64
+			var result []int
 			for !tok.AtEnd() {
 				n, err := tok.ReadInt()
 				if err != nil {
@@ -114,7 +114,7 @@ func caseSlice(elem reflect.Type) (func (unsafe.Pointer, *Tokenizer) error, erro
 				}
 				result = append(result, n)
 			}
-			*(*[]int64)(ptr) = result
+			*(*[]int)(ptr) = result
 			return tok.ReadEnd()
 		}, nil
 

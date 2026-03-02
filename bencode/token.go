@@ -1,4 +1,4 @@
-package main
+package bencode
 
 import (
 	"bytes"
@@ -70,7 +70,7 @@ func (t *Tokenizer) ReadString() (string, error) {
 	return s, nil
 }
 
-func (t *Tokenizer) ReadInt() (int64, error) {
+func (t *Tokenizer) ReadInt() (int, error) {
 	if t.pos >= len(t.data) {
         return 0, fmt.Errorf("unexpected EOF at pos %d", t.pos)
     }
@@ -85,7 +85,7 @@ func (t *Tokenizer) ReadInt() (int64, error) {
 		return 0, fmt.Errorf("missing 'e' in integer at pos %d", t.pos)
 	}
 
-	num, err := strconv.ParseInt(string(t.data[t.pos:t.pos+end]), 10, 64)
+	num, err := strconv.Atoi(string(t.data[t.pos:t.pos+end]))
 	if err != nil {
 		return 0, fmt.Errorf("malformed integer at pos %d", t.pos)
 	}

@@ -10,8 +10,8 @@ import (
 
 func main() {
 	file, _ := os.ReadFile("single.torrent")
-	var t bencode.TorrentMeta
-	if err := bencode.Unmarshal(file, &t); err != nil {
+	var t TorrentMeta
+	if err := Unmarshal(file, &t); err != nil {
         panic(err)
     }
 
