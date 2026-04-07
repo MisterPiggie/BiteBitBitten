@@ -1,5 +1,5 @@
 
 typedef enum {
-    TOKEN_END, TOKEN_INT, TOKEN_
+    TOKEN_END, TOKEN_INT, TOKEN
 
 } token_type;
