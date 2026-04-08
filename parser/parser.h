@@ -25,19 +25,18 @@ typedef struct {
 typedef struct {
     char *data;
     size_t length;
-} string;
+} bencode_string;
 
 typedef struct {
-    bencode_pairs pairs;
     file_content_buffer buffer;
     int cursor;
-} bencode_cursor;
+} bencode_parser;
 
 struct bencode_value {
     bencode_type type;
     union {
         int64_t number;
-        string string;
+        bencode_string string;
         struct {
             bencode_value **items;
             int count;
@@ -47,6 +46,8 @@ struct bencode_value {
 };
 
 
-
-
 bencode_pairs parse_file_content_buffer(file_content_buffer buffer);
+void parse_dict(bencode_parser *parser, bencode_pairs *pairs);
+void peek(bencode_parser *parser);
+void consume(bencode_parser *parser);
+
