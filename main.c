@@ -14,6 +14,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
     
+    
     buffer = read_bencoded_file(argv[1]);
     if (buffer.size == 0)
     {

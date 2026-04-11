@@ -22,7 +22,27 @@ file_content_buffer read_bencoded_file(char *file_path)
     return buffer;
 }
 
-void copy_torrent_file(char *file_path)
+bool copy_torrent_file(char *source, char *dest)
 {
-    FILE *fp = fopen(file_path, 
+    char ch;
+    FILE *source_fp,  *dest_fp;
+    if ((source_fp = fopen(source, "rb")) == NULL)
+    {
+        return false;
+    }
+    
+    if ((dest_fp = fopen(dest, "wb")) == NULL)
+    {
+        fclose(source_fp);
+        return false;
+    }
+
+    while((ch = getc(source_fp)) != EOF)
+        putc(ch, dest_fp);
+    
+    fclose(source_fp);
+    fclose(dest_fp);
+
+    return true;
+
 }
