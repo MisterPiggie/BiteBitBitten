@@ -2,52 +2,18 @@
 #include <stdint.h>
 #include "../types/types.h"
 
-typedef enum {
-    BENCODE_LIST,
-    BENCODE_NUMBER,
-    BENCODE_STRING,
-    BENCODE_DICT,
-} bencode_type;
 
-typedef struct bencode_value bencode_value;
+bencode_value *parse_file_content_buffer(file_content_buffer buffer);
 
+unsigned char peek(bencode_parser *parser);
+unsigned char consume(bencode_parser *parser);
 
-typedef struct {
-    char *key;
-    bencode_value *value;
-} bencode_pair;
+bencode_string parse_raw_string(bencode_parser *parser);
 
-typedef struct {
-    bencode_pair *bencode_pairs;
-    int count;
-} bencode_pairs;
+bencode_value *parse_dict(bencode_parser *parser);
+bencode_value *parse_string(bencode_parser *parser);
+bencode_value *parse_num(bencode_parser *parser);
+bencode_value *parse_list(bencode_parser *parser);
 
-typedef struct {
-    char *data;
-    size_t length;
-} bencode_string;
-
-typedef struct {
-    file_content_buffer buffer;
-    int cursor;
-} bencode_parser;
-
-struct bencode_value {
-    bencode_type type;
-    union {
-        int64_t number;
-        bencode_string string;
-        struct {
-            bencode_value **items;
-            int count;
-        } list;
-        bencode_pairs dict;
-    };
-};
-
-
-bencode_pairs parse_file_content_buffer(file_content_buffer buffer);
-void parse_dict(bencode_parser *parser, bencode_pairs *pairs);
-void peek(bencode_parser *parser);
-void consume(bencode_parser *parser);
+bencode_value *parse_value(bencode_parser *parser);
 

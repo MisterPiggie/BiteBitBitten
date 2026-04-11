@@ -21,3 +21,8 @@ file_content_buffer read_bencoded_file(char *file_path)
     fclose(fp);
     return buffer;
 }
+
+void copy_torrent_file(char *file_path)
+{
+    FILE *fp = fopen(file_path, 
+}

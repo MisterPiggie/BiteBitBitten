@@ -7,6 +7,7 @@
 int main(int argc, char **argv)
 {
     file_content_buffer buffer;
+    bencode_value *top_dict;
     if (argc != 2) 
     {
         fprintf(stderr, "ERROR: no file provided\n");
@@ -19,5 +20,12 @@ int main(int argc, char **argv)
         fprintf(stderr, "ERROR: file couldnt be open\n");
         exit(EXIT_FAILURE);
     }
+    top_dict = parse_file_content_buffer(buffer);
+    if (top_dict->dict.count == 0)
+    {
+        fprintf(stderr, "ERROR: file couldnt be parsed\n");
+        exit(EXIT_FAILURE);
+    }
+    printf("Parsing successful\n");
 
 }
