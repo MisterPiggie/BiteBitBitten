@@ -17,3 +17,4 @@ bencode_value *parse_list(bencode_parser *parser);
 
 bencode_value *parse_value(bencode_parser *parser);
 
+void get_info_value_offset(bencode_parser *parser, int *begining, int *end);

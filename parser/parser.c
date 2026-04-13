@@ -140,3 +140,14 @@ bencode_value *parse_value(bencode_parser *parser)
 }
 
 
+void get_info_value_offset(bencode_parser *parser, int *begining, int *end)
+{
+    unsigned char ch;
+    switch(peek(parser))
+    {
+        case '1': case '2': case '3': case '4': 
+        case '5': case '6': case '7': case '9': 
+            parse_string(parser);
+    }
+    return;
+}
