@@ -1,8 +1,8 @@
 #include <stddef.h>
-#include <openssl/sha.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "utils/file_interactions.h"
 #include "parser/parser.h"
 #include "SHA1/SHA1.h"
@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     bencode_parser parser;
     uint8_t hash[20];
     int begining, end;
-
+    memset(hash, 0, sizeof(hash));
     if (argc != 2) 
     {
         fprintf(stderr, "ERROR: no file provided\n");
@@ -41,13 +41,13 @@ int main(int argc, char **argv)
 
     get_info_value_offset(&parser, &begining, &end);
     printf("Beginning %d\nEnd %d\n", begining, end);
-    SHA1(parser.buffer.data + begining, end - begining, hash);
+    SHA1_hash(parser.buffer.data + begining, end - begining, hash);
 
-    printf("Hash is equal to %s", hash);
-    for (int i = 0; i < 20; i++)
-    {
+    printf("Hash: ");
+    for(int i = 0; i < 20; i++) {
         printf("%02x", hash[i]);
     }
+    printf("\n");
 
     printf("\n");
     printf("Parsing successful\n");
