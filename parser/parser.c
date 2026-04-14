@@ -5,12 +5,10 @@
 #include <string.h>
 
 
-bencode_parser init_bencode_parser(file_content_buffer buffer)
+void init_bencode_parser(file_content_buffer buffer, bencode_parser *parser)
 {
-    bencode_parser parser;
-    parser.buffer = buffer;
-    parser.cursor = 0;
-    return parser;
+    parser->buffer = buffer;
+    parser->cursor = 0;
 }
 
 bencode_value *parse_file_content_buffer(bencode_parser *parser)

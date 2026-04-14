@@ -3,7 +3,7 @@
 #include "../types/types.h"
 
 
-bencode_parser init_bencode_parser(file_content_buffer buffer);
+void init_bencode_parser(file_content_buffer buffer, bencode_parser *parser);
 bencode_value *parse_file_content_buffer(bencode_parser *parser);
 
 unsigned char peek(bencode_parser *parser);
