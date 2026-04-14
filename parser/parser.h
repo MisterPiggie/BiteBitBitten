@@ -3,7 +3,8 @@
 #include "../types/types.h"
 
 
-bencode_value *parse_file_content_buffer(file_content_buffer buffer);
+bencode_parser init_bencode_parser(file_content_buffer buffer);
+bencode_value *parse_file_content_buffer(bencode_parser *parser);
 
 unsigned char peek(bencode_parser *parser);
 unsigned char consume(bencode_parser *parser);
@@ -18,3 +19,4 @@ bencode_value *parse_list(bencode_parser *parser);
 bencode_value *parse_value(bencode_parser *parser);
 
 void get_info_value_offset(bencode_parser *parser, int *begining, int *end);
+void skip_value(bencode_parser *parser);

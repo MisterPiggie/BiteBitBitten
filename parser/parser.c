@@ -4,15 +4,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-bencode_value *parse_file_content_buffer(file_content_buffer buffer)
-{
-    bencode_value *ret_dict;
 
+bencode_parser init_bencode_parser(file_content_buffer buffer)
+{
     bencode_parser parser;
     parser.buffer = buffer;
     parser.cursor = 0;
+    return parser;
+}
 
-    ret_dict = parse_dict(&parser);
+bencode_value *parse_file_content_buffer(bencode_parser *parser)
+{
+    bencode_value *ret_dict;
+
+    ret_dict = parse_dict(parser);
 
     return ret_dict;
 }
@@ -142,12 +147,45 @@ bencode_value *parse_value(bencode_parser *parser)
 
 void get_info_value_offset(bencode_parser *parser, int *begining, int *end)
 {
-    unsigned char ch;
-    switch(peek(parser))
+    bencode_string key; 
+
+    parser->cursor = 0;
+    consume(parser);
+
+    while(peek(parser) != 'e')
     {
-        case '1': case '2': case '3': case '4': 
-        case '5': case '6': case '7': case '9': 
-            parse_string(parser);
+        key = parse_raw_string(parser);
+
+        if ((key.length == 4) && (strncmp((char *)key.data, "info", key.length) == 0))
+        {
+            *begining = parser->cursor;
+            skip_value(parser);
+            *end = parser->cursor;
+            return;
+        }
+
+        skip_value(parser);
     }
-    return;
 }
+
+void skip_value(bencode_parser *parser)
+{
+    switch (peek(parser)) {
+        case 'd': case 'l':
+            consume(parser);
+            while (peek(parser) != 'e')
+                skip_value(parser);
+            consume(parser);
+            break;
+        case 'i':
+            while (consume(parser) != 'e')
+                ;
+            break;
+        case '0': case '1': case '2': case '3': case '4': 
+        case '5': case '6': case '7': case '8': case '9': 
+            parse_raw_string(parser); //skip string value
+            break;
+    }
+}
+
+
