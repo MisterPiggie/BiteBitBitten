@@ -3,9 +3,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-void generate_peer_id(unsigned char peer_id[20])
+
+void generate_peer_id(unsigned char peer_id[21])
 {
-   int charset_len = sizeof(charset) - 1; 
    unsigned char buf[12];
    FILE *f = fopen("/dev/urandom", "rb");
    int i;
@@ -13,11 +13,11 @@ void generate_peer_id(unsigned char peer_id[20])
    if (f == NULL)
    {
        srand(time(NULL));
-       for (i = 0; i < 12; i++)
+       for (i = 8; i < 20; i++)
        {
            peer_id[i] = charset[rand() % charset_len];
        }
-       peer_id[12] = '\0';
+       peer_id[20] = '\0';
 
        return;
    }
@@ -25,12 +25,18 @@ void generate_peer_id(unsigned char peer_id[20])
    fread(buf, 1, 12, f);
    fclose(f);
 
-   for (i = 0; i < 12; i++)
+   for (i = 8; i < 20; i++)
    {
-       peer_id[i] = charset[buf[i] % charset_len];
+       peer_id[i] = charset[buf[i - 8] % charset_len];
    }
 
-   peer_id[12] = '\0';
+
+   for (i = 0; i < peer_id_version_len; i++)
+   {
+       peer_id[i] = peer_id_version[i];
+   }
+
+   peer_id[20] = '\0';
    
    return;
 }
