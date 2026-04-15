@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "../SHA1/SHA1.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -186,4 +187,9 @@ void skip_value(bencode_parser *parser)
     }
 }
 
-
+void get_info_hash(bencode_parser *parser, unsigned char info_hash[20])
+{
+    int begining, end;
+    get_info_value_offset(parser, &begining, &end);
+    SHA1_hash(parser->buffer.data + begining, end - begining, info_hash);
+}

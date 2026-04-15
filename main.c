@@ -5,7 +5,6 @@
 #include <string.h>
 #include "utils/file_interactions.h"
 #include "parser/parser.h"
-#include "SHA1/SHA1.h"
 
 int main(int argc, char **argv)
 {
@@ -13,7 +12,6 @@ int main(int argc, char **argv)
     bencode_value *top_dict;
     bencode_parser parser;
     uint8_t hash[20];
-    int begining, end;
     memset(hash, 0, sizeof(hash));
     if (argc != 2) 
     {
@@ -39,9 +37,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    get_info_value_offset(&parser, &begining, &end);
-    printf("Beginning %d\nEnd %d\n", begining, end);
-    SHA1_hash(parser.buffer.data + begining, end - begining, hash);
+    get_info_hash(&parser, hash);
 
     printf("Hash: ");
     for(int i = 0; i < 20; i++) {
