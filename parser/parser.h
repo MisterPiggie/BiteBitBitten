@@ -21,3 +21,5 @@ bencode_value *parse_value(bencode_parser *parser);
 void get_info_value_offset(bencode_parser *parser, int *begining, int *end);
 void skip_value(bencode_parser *parser);
 void get_info_hash(bencode_parser *parser, unsigned char info_hash[20]);
+
+

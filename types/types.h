@@ -53,6 +53,15 @@ struct bencode_value {
     };
 };
 
+typedef enum {
+    SINGLE_FILE,
+    MULTI_FILE,
+} bencode_info_type;
+
+typedef struct {
+    char announce[512];
+
+} torrent_file_data;
 
 
 #endif 

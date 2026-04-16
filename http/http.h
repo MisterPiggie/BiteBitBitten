@@ -1,3 +1,4 @@
+#define  DEFAULT_PORT 6881
 
 static const char charset[] = "abcdefghijklmnopqrstuvwxyz"
                               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
