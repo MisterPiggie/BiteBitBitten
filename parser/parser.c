@@ -6,15 +6,15 @@
 #include <string.h>
 
 
-void init_bencode_parser(file_content_buffer buffer, bencode_parser *parser)
+void init_BEN_parser(file_content_buffer buffer, BEN_parser *parser)
 {
     parser->buffer = buffer;
     parser->cursor = 0;
 }
 
-bencode_value *parse_file_content_buffer(bencode_parser *parser)
+BEN_value *parse_file_content_buffer(BEN_parser *parser)
 {
-    bencode_value *ret_dict;
+    BEN_value *ret_dict;
 
     ret_dict = parse_dict(parser);
 
@@ -22,15 +22,15 @@ bencode_value *parse_file_content_buffer(bencode_parser *parser)
 }
 
 
-bencode_value *parse_dict(bencode_parser *parser)
+BEN_value *parse_dict(BEN_parser *parser)
 {
-    bencode_string key;
-    bencode_value *value; 
+    BEN_string key;
+    BEN_value *value; 
 
-    bencode_value *return_dict= malloc(sizeof(bencode_value));
+    BEN_value *return_dict= malloc(sizeof(BEN_value));
 
     return_dict->type = BENCODE_DICT;
-    return_dict->dict.bencode_pairs = NULL;
+    return_dict->dict.BEN_pairs = NULL;
     return_dict->dict.count = 0;
 
     consume(parser);
@@ -39,36 +39,36 @@ bencode_value *parse_dict(bencode_parser *parser)
     {
         key = parse_raw_string(parser);
         value = parse_value(parser);
-        printf("%d\n", return_dict->dict.count); //debug
         printf("%.*s\n", (int) key.length, key.data); //debug
-        printf("%p\n", value); //debug
+        printf("%d\n", value->type); //debug
 
-        return_dict->dict.bencode_pairs = realloc(
-                return_dict->dict.bencode_pairs,
-                sizeof(bencode_pair) * (return_dict->dict.count + 1)
+
+        return_dict->dict.BEN_pairs = realloc(
+                return_dict->dict.BEN_pairs,
+                sizeof(BEN_pair) * (return_dict->dict.count + 1)
                );
-        return_dict->dict.bencode_pairs[return_dict->dict.count].key = key;
-        return_dict->dict.bencode_pairs[return_dict->dict.count].value = value;
+        return_dict->dict.BEN_pairs[return_dict->dict.count].key = key;
+        return_dict->dict.BEN_pairs[return_dict->dict.count].value = value;
         return_dict->dict.count++;
     }
     consume(parser); // consume final e
     return return_dict;
 }
 
-bencode_value *parse_string(bencode_parser *parser)
+BEN_value *parse_string(BEN_parser *parser)
 {
-    bencode_value *return_val = malloc(sizeof(bencode_value));
+    BEN_value *return_val = malloc(sizeof(BEN_value));
     return_val->type = BENCODE_STRING;
     return_val->string = parse_raw_string(parser);
 
     return return_val;
 }
 
-bencode_value *parse_num(bencode_parser *parser)
+BEN_value *parse_num(BEN_parser *parser)
 {
     int64_t num; 
     char *end;
-    bencode_value *return_val = malloc(sizeof(bencode_value));
+    BEN_value *return_val = malloc(sizeof(BEN_value));
 
     consume(parser); //consume i
     num = strtol((char *) parser->buffer.data + parser->cursor, &end, 10);
@@ -83,9 +83,9 @@ bencode_value *parse_num(bencode_parser *parser)
     return return_val;
 }
 
-bencode_value *parse_list(bencode_parser *parser)
+BEN_value *parse_list(BEN_parser *parser)
 {
-    bencode_value *return_val = malloc(sizeof(bencode_value));
+    BEN_value *return_val = malloc(sizeof(BEN_value));
     return_val->type = BENCODE_LIST;
     return_val->list.items = NULL;
     return_val->list.count = 0;
@@ -96,7 +96,7 @@ bencode_value *parse_list(bencode_parser *parser)
     {
         return_val->list.items = realloc(
                 return_val->list.items, 
-                sizeof(bencode_value *) * (return_val->list.count + 1)
+                sizeof(BEN_value *) * (return_val->list.count + 1)
         );
 
         return_val->list.items[return_val->list.count++] = parse_value(parser);
@@ -107,21 +107,21 @@ bencode_value *parse_list(bencode_parser *parser)
     return return_val;
 }
 
-unsigned char peek(bencode_parser *parser)
+unsigned char peek(BEN_parser *parser)
 {
     return parser->buffer.data[parser->cursor];
 }
 
-unsigned char consume(bencode_parser *parser)
+unsigned char consume(BEN_parser *parser)
 {
      return parser->buffer.data[parser->cursor++]; // might be problem
 }
 
 
-bencode_string parse_raw_string(bencode_parser *parser)
+BEN_string parse_raw_string(BEN_parser *parser)
 {
     char *delimeter;
-    bencode_string raw_str;
+    BEN_string raw_str;
 
     raw_str.length = strtol((char *) parser->buffer.data + parser->cursor, &delimeter, 10); //might be problem with cast
     parser->cursor = delimeter - (char *) parser->buffer.data; //might be problem with cast
@@ -132,7 +132,7 @@ bencode_string parse_raw_string(bencode_parser *parser)
     return raw_str;
 }
 
-bencode_value *parse_value(bencode_parser *parser)
+BEN_value *parse_value(BEN_parser *parser)
 {
     switch (peek(parser))
     {
@@ -144,9 +144,9 @@ bencode_value *parse_value(bencode_parser *parser)
 }
 
 
-void get_info_value_offset(bencode_parser *parser, int *begining, int *end)
+void get_info_value_offset(BEN_parser *parser, int *begining, int *end)
 {
-    bencode_string key; 
+    BEN_string key; 
 
     parser->cursor = 0;
     consume(parser);
@@ -167,7 +167,7 @@ void get_info_value_offset(bencode_parser *parser, int *begining, int *end)
     }
 }
 
-void skip_value(bencode_parser *parser)
+void skip_value(BEN_parser *parser)
 {
     switch (peek(parser)) {
         case 'd': case 'l':
@@ -187,7 +187,7 @@ void skip_value(bencode_parser *parser)
     }
 }
 
-void get_info_hash(bencode_parser *parser, unsigned char info_hash[20])
+void get_info_hash(BEN_parser *parser, unsigned char info_hash[20])
 {
     int begining, end;
     get_info_value_offset(parser, &begining, &end);
