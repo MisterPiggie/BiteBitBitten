@@ -1,6 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <cstdint>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -55,36 +56,31 @@ struct BEN_value {
     };
 };
 
-typedef enum {
-    MULTI_FILE,
-    SINGLE_FILE,
-} TR_info_type;
 
 
 typedef struct {
-    char **path;
-    int path_length;
-    uint64_t length;
-} TR_file;
+    char *announce;
+    int tier;
+} TR_tracker;
 
 typedef struct {
     char *name;
-    TR_info_type type;
-    int64_t piece_length; 
-    uint8_t *pieces;
-    TR_file *files;
-    int TR_file_length;
-    int64_t length;
-} TR_info;
+    char *torrent_path;
+    char *created_by;
+    char *comment;
 
-typedef struct {
-    char announce[MAX_CHAR];
-    char *announce_list[MAX_CHAR];
-    int announce_list_length;
-    char created_by[MAX_CHAR];
     int64_t creation_date;
-    TR_info info;
-} TR_file_data;
+
+    uint8_t info_hash[20];
+    uint64_t total_size;
+
+    TR_tracker *trackers;
+    int trackers_length;
+
+    TR_file *files;
+    int64_t piecies_length;
+
+} TR_info;
 
 
 #endif 
