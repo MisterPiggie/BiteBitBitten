@@ -220,12 +220,78 @@ BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
 void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 {
     BEN_value *temp_b_value;
-    if ((temp_b_value = get_BEN_value_by_key(pairs, "name")))
-        info->name = BEN_string_to_C_string(&temp_b_value->string);
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "info")))
+        parse_BEN_info_to_TR_info(&temp_b_value->dict, info);
+
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "announce")))
+        parse_BEN_announce_to_TR_info(pairs, info);
+
     if ((temp_b_value = get_BEN_value_by_key(pairs, "created by")))
         info->created_by= BEN_string_to_C_string(&temp_b_value->string);
+
     if ((temp_b_value = get_BEN_value_by_key(pairs, "comment")))
         info->comment = BEN_string_to_C_string(&temp_b_value->string);
+
     if ((temp_b_value = get_BEN_value_by_key(pairs, "creation date")))
         info->creation_date = temp_b_value->number;
+}
+
+
+void parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info);
+
+void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
+{
+    BEN_value *announce;
+    BEN_value *announce_list;
+    int i, j, temp_trackers_length = 0;
+
+    info->trackers_length = 0;
+
+    announce = get_BEN_value_by_key(pairs, "announce");
+    if (announce)
+    {   
+        info->trackers_length++;
+    }
+
+    announce_list = get_BEN_value_by_key(pairs, "announce-list");
+    if (announce_list)
+    {
+        for (i = 0; i < announce_list->list.count; i++)
+        {
+            if (announce_list->list.items[i]->type == BENCODE_LIST)
+                info->trackers_length += announce_list->list.items[i]->list.count;
+        }
+    }
+
+    if (temp_trackers_length == 0)
+        return;
+    info->trackers = malloc(sizeof(TR_tracker) * info->trackers_length);
+    if (info->trackers == NULL)
+        return;
+
+    if (announce)
+    {
+        info->trackers[temp_trackers_length].announce = BEN_string_to_C_string(&announce->string);
+        info->trackers[temp_trackers_length].tier = 0;
+        temp_trackers_length++;
+    }
+
+    if (announce_list)
+    {
+        for (i = 0; i < announce_list->list.count; i++)
+        {
+
+            if (announce_list->list.items[i]->type == BENCODE_LIST)
+                for (j = 0; j < announce_list->list.items[i]->list.count; j++)
+                {
+                    info->trackers[temp_trackers_length].announce = 
+                        BEN_string_to_C_string(
+                                &announce_list->list.items[i]->list.items[j]->string
+                                );
+
+                    info->trackers[temp_trackers_length].tier = i;
+                    temp_trackers_length++;
+                }
+        }
+    }
 }
