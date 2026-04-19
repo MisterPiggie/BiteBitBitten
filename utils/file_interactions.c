@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-file_content_buffer read_bencoded_file(char *file_path)
+file_content_buffer read_BEN_file(char *file_path)
 {
     file_content_buffer buffer = {0};
     FILE *fp = fopen(file_path, "rb");

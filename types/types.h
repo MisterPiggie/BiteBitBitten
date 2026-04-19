@@ -1,11 +1,9 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <cstdint>
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAX_CHAR 512
 
 typedef struct {
     unsigned char *data;
@@ -64,6 +62,16 @@ typedef struct {
 } TR_tracker;
 
 typedef struct {
+    char *path;
+
+    uint64_t length;
+    uint64_t offset;
+
+    uint32_t first_piece;
+    uint32_t last_piece;
+} TR_file;
+
+typedef struct {
     char *name;
     char *torrent_path;
     char *created_by;
@@ -72,13 +80,14 @@ typedef struct {
     int64_t creation_date;
 
     uint8_t info_hash[20];
+    uint8_t *pieces;
     uint64_t total_size;
 
     TR_tracker *trackers;
     int trackers_length;
 
     TR_file *files;
-    int64_t piecies_length;
+    int64_t pieces_length;
 
 } TR_info;
 

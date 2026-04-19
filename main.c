@@ -9,8 +9,8 @@
 int main(int argc, char **argv)
 {
     file_content_buffer buffer;
-    bencode_value *top_dict;
-    bencode_parser parser;
+    BEN_value *top_dict;
+    BEN_parser parser;
     uint8_t hash[20];
     memset(hash, 0, sizeof(hash));
     if (argc != 2) 
@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     }
     
     
-    buffer = read_bencoded_file(argv[1]);
+    buffer = read_BEN_file(argv[1]);
     if (buffer.size == 0)
     {
         fprintf(stderr, "ERROR: file couldnt be open\n");
@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     }
 
 
-    init_bencode_parser(buffer, &parser);
+    init_BEN_parser(buffer, &parser);
     top_dict = parse_file_content_buffer(&parser);
 
     if (top_dict->dict.count == 0)

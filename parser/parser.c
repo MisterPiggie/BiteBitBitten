@@ -39,9 +39,8 @@ BEN_value *parse_dict(BEN_parser *parser)
     {
         key = parse_raw_string(parser);
         value = parse_value(parser);
-        printf("%.*s\n", (int) key.length, key.data); //debug
-        printf("%d\n", value->type); //debug
 
+        printf("%.*s\n", (int) key.length, key.data); //debug
 
         return_dict->dict.BEN_pairs = realloc(
                 return_dict->dict.BEN_pairs,
@@ -192,4 +191,41 @@ void get_info_hash(BEN_parser *parser, unsigned char info_hash[20])
     int begining, end;
     get_info_value_offset(parser, &begining, &end);
     SHA1_hash(parser->buffer.data + begining, end - begining, info_hash);
+}
+
+char *BEN_string_to_C_string(const BEN_string *b_string)
+{
+    return strndup((char *)b_string->data, b_string->length);
+}
+
+bool BEN_string_equals(BEN_string *b_key, const char *key)
+{
+   if (strcmp(BEN_string_to_C_string(b_key), key) == 0)
+       return true;
+   return false;
+}
+
+BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
+{
+    int i;
+    for (i = 0; i < pairs->count; i++)
+    {
+        if (BEN_string_equals(&pairs->BEN_pairs->key, key))
+            return pairs->BEN_pairs->value;
+    }
+    return NULL;
+}
+
+
+void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info)
+{
+    BEN_value *temp_b_value;
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "name")))
+        info->name = BEN_string_to_C_string(&temp_b_value->string);
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "created by")))
+        info->created_by= BEN_string_to_C_string(&temp_b_value->string);
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "comment")))
+        info->comment = BEN_string_to_C_string(&temp_b_value->string);
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "creation date")))
+        info->creation_date = temp_b_value->number;
 }
