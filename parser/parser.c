@@ -1,7 +1,7 @@
 #include "parser.h"
 #include "../SHA1/SHA1.h"
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -40,7 +40,7 @@ BEN_value *parse_dict(BEN_parser *parser)
         key = parse_raw_string(parser);
         value = parse_value(parser);
 
-        printf("%.*s type: %d\n", (int) key.length, key.data, value->type); //debug
+        // printf("%.*s type: %d\n", (int) key.length, key.data, value->type); //debug
 
         return_dict->dict.BEN_pairs = realloc(
                 return_dict->dict.BEN_pairs,
@@ -195,6 +195,12 @@ void get_info_hash(BEN_parser *parser, unsigned char info_hash[20])
 
 char *BEN_string_to_C_string(const BEN_string *b_string)
 {
+    printf("%d\n", (int) b_string->length);
+    for (int i = 0; i < (int) b_string->length; i++)
+    {
+        printf("%c", *(b_string->data + i));
+    }
+    printf("\n");
     return strndup((char *)b_string->data, b_string->length);
 }
 
@@ -210,7 +216,7 @@ BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
     int i;
     for (i = 0; i < pairs->count; i++)
     {
-        if (BEN_string_equals(&pairs->BEN_pairs->key, key))
+        if (BEN_string_equals(&pairs->BEN_pairs[i].key, key))
             return pairs->BEN_pairs->value;
     }
     return NULL;
@@ -221,19 +227,34 @@ void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 {
     BEN_value *temp_b_value;
     if ((temp_b_value = get_BEN_value_by_key(pairs, "info")))
+    {
         parse_BEN_info_to_TR_info(&temp_b_value->dict, info);
+        printf("info parsed");
+    }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "announce")))
+    {
         parse_BEN_announce_to_TR_info(pairs, info);
+        printf("announce parsed");
+    }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "created by")))
+    {
         info->created_by= BEN_string_to_C_string(&temp_b_value->string);
+        printf("created by parsed");
+    }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "comment")))
+    {
         info->comment = BEN_string_to_C_string(&temp_b_value->string);
+        printf("comment parsed");
+    }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "creation date")))
+    {
         info->creation_date = temp_b_value->number;
+        printf("creation date parsed");
+    }
 }
 
 
