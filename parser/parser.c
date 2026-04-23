@@ -40,7 +40,7 @@ BEN_value *parse_dict(BEN_parser *parser)
         key = parse_raw_string(parser);
         value = parse_value(parser);
 
-        printf("%.*s\n", (int) key.length, key.data); //debug
+        printf("%.*s type: %d\n", (int) key.length, key.data, value->type); //debug
 
         return_dict->dict.BEN_pairs = realloc(
                 return_dict->dict.BEN_pairs,
@@ -237,7 +237,31 @@ void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 }
 
 
-void parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info);
+void parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info)
+{
+    BEN_value *temp_b_value;
+    temp_b_value = get_BEN_value_by_key(b_info, "name");
+    info->name = BEN_string_to_C_string(&temp_b_value->string);
+
+    temp_b_value = get_BEN_value_by_key(b_info, "piece length");
+    info->piece_length = temp_b_value->number;
+
+    temp_b_value = get_BEN_value_by_key(b_info, "pieces");
+    parse_BEN_pieces_to_TR_info(&temp_b_value->string, info);
+
+    temp_b_value = get_BEN_value_by_key(b_info, "files");
+    if (temp_b_value != NULL)
+    {
+        parse_BEN_multifile_list_to_TR_info(&temp_b_value->list, info);
+        return;
+    }
+    
+    temp_b_value = get_BEN_value_by_key(b_info, "length");
+    info->files = malloc(sizeof(TR_file));
+    info->files->length = temp_b_value->number;
+    info->files->path = info->name;
+    return;
+}
 
 void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 {
@@ -294,4 +318,51 @@ void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
                 }
         }
     }
+}
+
+
+void parse_BEN_pieces_to_TR_info(BEN_string *b_str, TR_info *info)
+{
+    info->pieces = malloc(b_str->length * sizeof(uint8_t));
+    memcpy(info->pieces, b_str->data, b_str->length);
+
+    info->pieces_string_length = b_str->length;
+    return;
+}
+
+void parse_BEN_multifile_list_to_TR_info(BEN_list *b_list, TR_info *info)
+{
+    int i;
+
+    info->files = malloc(sizeof(TR_info) * b_list->count);
+
+    for (i = 0; i<b_list->count; i++)
+    {
+        info->files[i].length = get_BEN_value_by_key(&b_list->items[i]->dict, "length")->number;
+        info->files[i].path = parse_BEN_list_to_path_C_string(
+                &get_BEN_value_by_key(&b_list->items[i]->dict, "path")->list
+                );
+    }
+}
+
+char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
+{
+    int path_length = 0, i = 0;
+    char *path_str;
+    for (i = 0; i < b_list->count; i++)
+    {
+        path_length += b_list->items[i]->string.length;
+    }
+    path_length += b_list->count; //for "/" symbol and NULL terminator
+    
+    path_str = malloc(sizeof(char) * path_length);
+
+    for (i = 0; i < b_list->count; i++)
+    {
+        strncat(path_str, (char *) b_list->items[i]->string.data, b_list->items[i]->string.length);
+        strcat(path_str, "/");
+    }
+
+    path_str[path_length] = '\0';
+    return path_str;
 }

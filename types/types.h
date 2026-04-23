@@ -41,15 +41,18 @@ typedef struct {
     int cursor;
 } BEN_parser;
 
+typedef struct {
+    BEN_value **items;
+    int count;
+} BEN_list;
+
+
 struct BEN_value {
     BEN_type type;
     union {
         int64_t number;
         BEN_string string;
-        struct {
-            BEN_value **items;
-            int count;
-        } list;
+        BEN_list list;
         BEN_pairs dict;
     };
 };
@@ -81,13 +84,14 @@ typedef struct {
 
     uint8_t info_hash[20];
     uint8_t *pieces;
+    size_t pieces_string_length;
     uint64_t total_size;
 
     TR_tracker *trackers;
     int trackers_length;
 
     TR_file *files;
-    int64_t pieces_length;
+    int64_t piece_length;
 
 } TR_info;
 

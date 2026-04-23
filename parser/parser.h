@@ -37,4 +37,7 @@ void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info);
 //BEN to TR helper funcs
 BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key); 
 char *BEN_string_to_C_string(const BEN_string *b_string);
+void parse_BEN_pieces_to_TR_info(BEN_string *b_str, TR_info *info);
 bool BEN_string_equals(BEN_string *b_key, const char *key);
+void parse_BEN_multifile_list_to_TR_info(BEN_list *b_list, TR_info *info);
+char *parse_BEN_list_to_path_C_string(BEN_list *b_list);
