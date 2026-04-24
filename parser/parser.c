@@ -195,20 +195,21 @@ void get_info_hash(BEN_parser *parser, unsigned char info_hash[20])
 
 char *BEN_string_to_C_string(const BEN_string *b_string)
 {
-    printf("%d\n", (int) b_string->length);
-    for (int i = 0; i < (int) b_string->length; i++)
-    {
-        printf("%c", *(b_string->data + i));
-    }
-    printf("\n");
+    // printf("%d\n", (int) b_string->length);
+    // for (int i = 0; i < (int) b_string->length; i++)
+    // {
+    //     printf("%c", *(b_string->data + i));
+    // }
+    // printf("\n");
     return strndup((char *)b_string->data, b_string->length);
 }
 
 bool BEN_string_equals(BEN_string *b_key, const char *key)
 {
-   if (strcmp(BEN_string_to_C_string(b_key), key) == 0)
-       return true;
-   return false;
+    printf("%s\n", BEN_string_to_C_string(b_key));
+    if (strcmp(BEN_string_to_C_string(b_key), key) == 0)
+        return true;
+    return false;
 }
 
 BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
@@ -226,11 +227,6 @@ BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
 void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 {
     BEN_value *temp_b_value;
-    if ((temp_b_value = get_BEN_value_by_key(pairs, "info")))
-    {
-        parse_BEN_info_to_TR_info(&temp_b_value->dict, info);
-        printf("info parsed");
-    }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "announce")))
     {
@@ -254,6 +250,12 @@ void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info)
     {
         info->creation_date = temp_b_value->number;
         printf("creation date parsed");
+    }
+
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "info")))
+    {
+        parse_BEN_info_to_TR_info(&temp_b_value->dict, info);
+        printf("info parsed");
     }
 }
 
