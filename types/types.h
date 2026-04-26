@@ -91,6 +91,7 @@ typedef struct {
     int trackers_length;
 
     TR_file *files;
+    int files_count;
     int64_t piece_length;
 
 } TR_info;

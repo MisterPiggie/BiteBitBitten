@@ -40,7 +40,6 @@ BEN_value *parse_dict(BEN_parser *parser)
         key = parse_raw_string(parser);
         value = parse_value(parser);
 
-        // printf("%.*s type: %d\n", (int) key.length, key.data, value->type); //debug
 
         return_dict->dict.BEN_pairs = realloc(
                 return_dict->dict.BEN_pairs,
@@ -195,18 +194,11 @@ void get_info_hash(BEN_parser *parser, unsigned char info_hash[20])
 
 char *BEN_string_to_C_string(const BEN_string *b_string)
 {
-    // printf("%d\n", (int) b_string->length);
-    // for (int i = 0; i < (int) b_string->length; i++)
-    // {
-    //     printf("%c", *(b_string->data + i));
-    // }
-    // printf("\n");
     return strndup((char *)b_string->data, b_string->length);
 }
 
 bool BEN_string_equals(BEN_string *b_key, const char *key)
 {
-    printf("%s\n", BEN_string_to_C_string(b_key));
     if (strcmp(BEN_string_to_C_string(b_key), key) == 0)
         return true;
     return false;
@@ -218,7 +210,7 @@ BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
     for (i = 0; i < pairs->count; i++)
     {
         if (BEN_string_equals(&pairs->BEN_pairs[i].key, key))
-            return pairs->BEN_pairs->value;
+            return pairs->BEN_pairs[i].value;
     }
     return NULL;
 }
@@ -228,34 +220,26 @@ void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 {
     BEN_value *temp_b_value;
 
-    if ((temp_b_value = get_BEN_value_by_key(pairs, "announce")))
+    parse_BEN_announce_to_TR_info(pairs, info);
+
+    if ((temp_b_value = get_BEN_value_by_key(pairs, "info")))
     {
-        parse_BEN_announce_to_TR_info(pairs, info);
-        printf("announce parsed");
+        parse_BEN_info_to_TR_info(&temp_b_value->dict, info);
     }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "created by")))
     {
         info->created_by= BEN_string_to_C_string(&temp_b_value->string);
-        printf("created by parsed");
     }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "comment")))
     {
         info->comment = BEN_string_to_C_string(&temp_b_value->string);
-        printf("comment parsed");
     }
 
     if ((temp_b_value = get_BEN_value_by_key(pairs, "creation date")))
     {
         info->creation_date = temp_b_value->number;
-        printf("creation date parsed");
-    }
-
-    if ((temp_b_value = get_BEN_value_by_key(pairs, "info")))
-    {
-        parse_BEN_info_to_TR_info(&temp_b_value->dict, info);
-        printf("info parsed");
     }
 }
 
@@ -288,43 +272,34 @@ void parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info)
 
 void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 {
-    BEN_value *announce;
     BEN_value *announce_list;
     int i, j, temp_trackers_length = 0;
 
     info->trackers_length = 0;
 
-    announce = get_BEN_value_by_key(pairs, "announce");
-    if (announce)
-    {   
-        info->trackers_length++;
+    announce_list = get_BEN_value_by_key(pairs, "announce-list");
+    for (i = 0; i < announce_list->list.count; i++)
+    {
+        printf("%s\n", BEN_string_to_C_string(&announce_list->list.items[i]->list.items[0]->string));
+        printf("%d\n", announce_list->list.items[i]->list.count);
     }
 
-    announce_list = get_BEN_value_by_key(pairs, "announce-list");
-    if (announce_list)
+    if ((announce_list = get_BEN_value_by_key(pairs, "announce-list")))
     {
         for (i = 0; i < announce_list->list.count; i++)
         {
-            if (announce_list->list.items[i]->type == BENCODE_LIST)
+            {
                 info->trackers_length += announce_list->list.items[i]->list.count;
+                printf("Type of item %d: %d\n", i, announce_list->list.items[i]->type);
+                printf("Length of list %d: %d\n", i, announce_list->list.items[i]->list.count);
+            }
         }
-    }
 
-    if (temp_trackers_length == 0)
-        return;
-    info->trackers = malloc(sizeof(TR_tracker) * info->trackers_length);
-    if (info->trackers == NULL)
-        return;
-
-    if (announce)
-    {
-        info->trackers[temp_trackers_length].announce = BEN_string_to_C_string(&announce->string);
-        info->trackers[temp_trackers_length].tier = 0;
-        temp_trackers_length++;
-    }
-
-    if (announce_list)
-    {
+        if (temp_trackers_length == 0)
+            return;
+        info->trackers = malloc(sizeof(TR_tracker) * info->trackers_length);
+        if (info->trackers == NULL)
+            return;
         for (i = 0; i < announce_list->list.count; i++)
         {
 
@@ -340,7 +315,17 @@ void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
                     temp_trackers_length++;
                 }
         }
+        return;
+    } else if ((announce_list = get_BEN_value_by_key(pairs, "announce")))
+    {   
+        info->trackers_length++;
+        printf("First trackers length: %d\n", info->trackers_length);
+        info->trackers[temp_trackers_length].announce = BEN_string_to_C_string(&announce_list->string);
+        info->trackers[temp_trackers_length].tier = 0;
+        temp_trackers_length++;
     }
+
+
 }
 
 
@@ -357,7 +342,8 @@ void parse_BEN_multifile_list_to_TR_info(BEN_list *b_list, TR_info *info)
 {
     int i;
 
-    info->files = malloc(sizeof(TR_info) * b_list->count);
+    info->files_count = b_list->count;
+    info->files = malloc(sizeof(TR_info) * info->files_count);
 
     for (i = 0; i<b_list->count; i++)
     {

@@ -30,7 +30,6 @@ int main(int argc, char **argv)
     }
 
 
-    // printf("Trying to parse into TR_info"); //debug
     init_BEN_parser(buffer, &parser);
     top_dict = parse_file_content_buffer(&parser);
 
@@ -40,21 +39,26 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    // printf("Trying to parse into TR_info"); //debug
-    BEN_pairs_to_TR_info(&top_dict->dict, info);
 
-    get_info_hash(&parser, hash);
+
+    BEN_pairs_to_TR_info(&top_dict->dict, info);
     // printf("Name: %s\n", info->name);
     // printf("Created by: %s\n", info->created_by);
-    // printf("Comment: %s\n", info->comment);
-    // printf("Piece length: %ld\n", info->piece_length);
-    // printf("Announce: %s\n", info->trackers[0].announce);
-    // printf("Filepath: %s\n", info->files[0].path);
-    printf("Hash: ");
-    for(int i = 0; i < 20; i++) {
-        printf("%02x", hash[i]);
-    }
-    printf("\n");
+    // printf("Creation date: %ld\n", info->creation_date);
+    // printf("Trackers length: %d\n", info->trackers_length);
+    // printf("Amount of files: %d\n", info->files_count);
+    // for (int i = 0; i < info->files_count; i++)
+    // {
+    //     printf("    Filepath: %s\n", info->files[i].path);
+    // }
+    //
+    // get_info_hash(&parser, info->info_hash);
+    // printf("Hash: ");
+    // for(int i = 0; i < 20; i++) {
+    //     printf("%02x", info->info_hash[i]);
+    // }
+    // printf("\n");
+    
 
     printf("\n");
     printf("Parsing successful\n");
