@@ -261,13 +261,13 @@ void parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info)
     {
         parse_BEN_multifile_list_to_TR_info(&temp_b_value->list, info);
         return;
+    } else if ((temp_b_value = get_BEN_value_by_key(b_info, "length")) != NULL)
+    {
+        info->files = malloc(sizeof(TR_file));
+        info->files->length = temp_b_value->number;
+        info->files->path = info->name;
+        return;
     }
-    
-    temp_b_value = get_BEN_value_by_key(b_info, "length");
-    info->files = malloc(sizeof(TR_file));
-    info->files->length = temp_b_value->number;
-    info->files->path = info->name;
-    return;
 }
 
 void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
@@ -277,26 +277,15 @@ void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 
     info->trackers_length = 0;
 
-    announce_list = get_BEN_value_by_key(pairs, "announce-list");
-    for (i = 0; i < announce_list->list.count; i++)
-    {
-        printf("%s\n", BEN_string_to_C_string(&announce_list->list.items[i]->list.items[0]->string));
-        printf("%d\n", announce_list->list.items[i]->list.count);
-    }
-
     if ((announce_list = get_BEN_value_by_key(pairs, "announce-list")))
     {
         for (i = 0; i < announce_list->list.count; i++)
         {
             {
                 info->trackers_length += announce_list->list.items[i]->list.count;
-                printf("Type of item %d: %d\n", i, announce_list->list.items[i]->type);
-                printf("Length of list %d: %d\n", i, announce_list->list.items[i]->list.count);
             }
         }
 
-        if (temp_trackers_length == 0)
-            return;
         info->trackers = malloc(sizeof(TR_tracker) * info->trackers_length);
         if (info->trackers == NULL)
             return;
@@ -313,6 +302,7 @@ void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 
                     info->trackers[temp_trackers_length].tier = i;
                     temp_trackers_length++;
+                    printf("%d\n", temp_trackers_length);
                 }
         }
         return;
@@ -368,8 +358,8 @@ char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
 
     for (i = 0; i < b_list->count; i++)
     {
-        strncat(path_str, (char *) b_list->items[i]->string.data, b_list->items[i]->string.length);
         strcat(path_str, "/");
+        strncat(path_str, (char *) b_list->items[i]->string.data, b_list->items[i]->string.length);
     }
 
     path_str[path_length] = '\0';

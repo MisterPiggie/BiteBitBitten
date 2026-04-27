@@ -42,22 +42,26 @@ int main(int argc, char **argv)
 
 
     BEN_pairs_to_TR_info(&top_dict->dict, info);
-    // printf("Name: %s\n", info->name);
-    // printf("Created by: %s\n", info->created_by);
-    // printf("Creation date: %ld\n", info->creation_date);
-    // printf("Trackers length: %d\n", info->trackers_length);
-    // printf("Amount of files: %d\n", info->files_count);
-    // for (int i = 0; i < info->files_count; i++)
-    // {
-    //     printf("    Filepath: %s\n", info->files[i].path);
-    // }
-    //
-    // get_info_hash(&parser, info->info_hash);
-    // printf("Hash: ");
-    // for(int i = 0; i < 20; i++) {
-    //     printf("%02x", info->info_hash[i]);
-    // }
-    // printf("\n");
+    printf("Name: %s\n", info->name);
+    printf("Created by: %s\n", info->created_by);
+    printf("Creation date: %ld\n", info->creation_date);
+    printf("Trackers: \n");
+    for (int i = 0; i < info->trackers_length; i++)
+    {
+        printf("    %s\n", info->trackers->announce);
+    }
+    printf("Amount of files: %d\n", info->files_count);
+    for (int i = 0; i < info->files_count; i++)
+    {
+        printf("    Filepath: %s\n", info->files[i].path);
+    }
+
+    get_info_hash(&parser, info->info_hash);
+    printf("Hash: ");
+    for(int i = 0; i < 20; i++) {
+        printf("%02x", info->info_hash[i]);
+    }
+    printf("\n");
     
 
     printf("\n");
