@@ -62,7 +62,6 @@ int main(int argc, char **argv)
         printf("%02x", info->info_hash[i]);
     }
     printf("\n");
-    
 
     printf("\n");
     printf("Parsing successful\n");

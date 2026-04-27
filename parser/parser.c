@@ -302,7 +302,6 @@ void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 
                     info->trackers[temp_trackers_length].tier = i;
                     temp_trackers_length++;
-                    printf("%d\n", temp_trackers_length);
                 }
         }
         return;
@@ -352,9 +351,10 @@ char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
     {
         path_length += b_list->items[i]->string.length;
     }
-    path_length += b_list->count; //for "/" symbol and NULL terminator
+    path_length += b_list->count + 1; //for "/" symbol and NULL terminator 
     
     path_str = malloc(sizeof(char) * path_length);
+    path_str[0] = '\0';
 
     for (i = 0; i < b_list->count; i++)
     {
@@ -362,6 +362,5 @@ char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
         strncat(path_str, (char *) b_list->items[i]->string.data, b_list->items[i]->string.length);
     }
 
-    path_str[path_length] = '\0';
     return path_str;
 }
