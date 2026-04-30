@@ -1,6 +1,7 @@
 #include "file_interactions.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 file_content_buffer read_BEN_file(char *file_path)
 {
@@ -45,4 +46,14 @@ bool copy_torrent_file(char *source, char *dest)
 
     return true;
 
+}
+
+const char *get_config_path(void)
+{
+    static char *config_path = NULL;
+
+    if (config_path == NULL)
+    {
+        s = make_config_folder()
+    }
 }

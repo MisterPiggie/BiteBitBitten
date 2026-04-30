@@ -27,8 +27,9 @@ void get_info_value_offset(BEN_parser *parser, int *begining, int *end);
 void skip_value(BEN_parser *parser);
 void get_info_hash(BEN_parser *parser, unsigned char info_hash[20]);
 
-//parsing iside struct 
+//parsing inside struct 
 void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info);
+void fill_in_calculated_field_in_TR_info(TR_info *info);
 
 //complex operations inside BEN_pairs_to_TR_info
 void parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info);

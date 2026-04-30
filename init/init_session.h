@@ -1,0 +1,9 @@
+#include "../types/types.h"
+
+//Init funcs for Client
+static char const *get_config_dir_path(void);
+void *init_CL_session(CL_session *session);
+
+//Helper init funcs 
+char *build_path(const char *main_path, const char *sub_path);
+const char *get_home_dir_path(void);

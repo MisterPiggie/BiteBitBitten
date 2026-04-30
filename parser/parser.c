@@ -364,3 +364,22 @@ char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
 
     return path_str;
 }
+
+void fill_in_calculated_field_in_TR_info(TR_info *info)
+{
+    uint64_t total_size = 0;
+    int i;
+
+    for (i = 0; i < info->files_count; i++)
+    {
+        info->files[i].offset = total_size;
+
+        info->files[i].first_piece = info->files[i].offset / info->piece_length;
+        info->files[i].last_piece = 
+            (info->files[i].offset + info->files[i].length - 1) / info->piece_length;
+
+        total_size += info->files[i].length;
+    }
+
+    info->total_size = total_size;
+}

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "types/types.h"
-#include "utils/file_interactions.h"
+#include "files/file_interactions.h"
 #include "parser/parser.h"
 
 int main(int argc, char **argv)
@@ -42,6 +42,7 @@ int main(int argc, char **argv)
 
 
     BEN_pairs_to_TR_info(&top_dict->dict, info);
+    fill_in_calculated_field_in_TR_info(info);
     printf("Name: %s\n", info->name);
     printf("Created by: %s\n", info->created_by);
     printf("Creation date: %ld\n", info->creation_date);
@@ -54,7 +55,14 @@ int main(int argc, char **argv)
     for (int i = 0; i < info->files_count; i++)
     {
         printf("    Filepath: %s\n", info->files[i].path);
+        printf("    File size: %ld\n", info->files[i].length);
+        printf("    Offset: %ld\n", info->files[i].offset);
+        printf("    First piece: %d\n", info->files[i].first_piece);
+        printf("    Last piece: %d\n", info->files[i].last_piece);
     }
+
+
+    printf("Total size: %ld\n", info->total_size);
 
     get_info_hash(&parser, info->info_hash);
     printf("Hash: ");

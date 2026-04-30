@@ -5,11 +5,14 @@
 #include <stdint.h>
 
 
+//FILE structs
 typedef struct {
     unsigned char *data;
     size_t size;
 } file_content_buffer;
 
+
+//BEN structs
 typedef enum {
     BENCODE_LIST,
     BENCODE_NUMBER,
@@ -59,6 +62,7 @@ struct BEN_value {
 
 
 
+//Torrent structs
 typedef struct {
     char *announce;
     int tier;
@@ -95,6 +99,16 @@ typedef struct {
     int64_t piece_length;
 
 } TR_info;
+
+
+//Client structs
+
+typedef struct {
+    char *download_folder_path;
+    char *resume_dir_path;
+    char *torrent_dir_path;
+    char *config_dir_path;
+} CL_session;
 
 
 #endif 
