@@ -12,6 +12,7 @@ void init_CL_session(CL_session *session)
     const char* config_path = get_config_dir_path();
 
     session->config_dir_path = build_path(config_path, "bbb");
+    session->config_file_path = build_path(session->config_dir_path, "config.pig");
     session->resume_dir_path = build_path(session->config_dir_path, "resume");
     session->torrent_dir_path = build_path(session->config_dir_path, "torrent");
     

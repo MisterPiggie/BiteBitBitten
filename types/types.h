@@ -108,6 +108,7 @@ typedef struct {
     char *resume_dir_path;
     char *torrent_dir_path;
     char *config_dir_path;
+    char *config_file_path;
 } CL_session;
 
 

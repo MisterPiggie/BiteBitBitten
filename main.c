@@ -36,7 +36,8 @@ int main(int argc, char **argv)
 
 
 
-    printf("Config path: %s\n", session->config_dir_path);
+    printf("Config dir path: %s\n", session->config_dir_path);
+    printf("Config file path: %s\n", session->config_file_path);
     printf("Resume path: %s\n", session->resume_dir_path);
     printf("Torrent path: %s\n", session->torrent_dir_path);
 
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
     printf("Trackers: \n");
     for (int i = 0; i < info->trackers_length; i++)
     {
-        printf("    %s\n", info->trackers->announce);
+        printf("    %s\n", info->trackers[i].announce);
     }
     printf("Amount of files: %d\n", info->files_count);
     for (int i = 0; i < info->files_count; i++)
