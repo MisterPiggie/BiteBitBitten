@@ -6,6 +6,7 @@
 #include "types/types.h"
 #include "files/file_interactions.h"
 #include "parser/parser.h"
+#include "init/init_session.h"
 
 int main(int argc, char **argv)
 {
@@ -15,6 +16,8 @@ int main(int argc, char **argv)
     TR_info *info = malloc(sizeof(TR_info));
     uint8_t hash[20];
     memset(hash, 0, sizeof(hash));
+    CL_session *session = malloc(sizeof(CL_session)); 
+
     if (argc != 2) 
     {
         fprintf(stderr, "ERROR: no file provided\n");
@@ -29,6 +32,17 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    init_CL_session(session);
+
+
+
+    printf("Config path: %s\n", session->config_dir_path);
+    printf("Resume path: %s\n", session->resume_dir_path);
+    printf("Torrent path: %s\n", session->torrent_dir_path);
+
+    make_dir_recursive(session->config_dir_path, 0755);
+    make_dir_recursive(session->resume_dir_path, 0755);
+    make_dir_recursive(session->torrent_dir_path, 0755);
 
     init_BEN_parser(buffer, &parser);
     top_dict = parse_file_content_buffer(&parser);

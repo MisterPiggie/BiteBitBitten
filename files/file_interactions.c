@@ -1,7 +1,9 @@
 #include "file_interactions.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 file_content_buffer read_BEN_file(char *file_path)
 {
@@ -48,12 +50,33 @@ bool copy_torrent_file(char *source, char *dest)
 
 }
 
-const char *get_config_path(void)
+bool make_dir(char *path, int permissions)
 {
-    static char *config_path = NULL;
+    return mkdir(path, permissions) == 0 || errno == EEXIST;
+}
 
-    if (config_path == NULL)
+bool make_dir_recursive(char *path, int permissions)
+{
+    bool ok;
+    char *path_copy = strdup(path);
+    char *tmp = path_copy;
+
+    while (*tmp != '\0')
     {
-        s = make_config_folder()
+        if (*tmp == '/')
+        {
+            *tmp = '\0'; //change '/' to null to use this for make_dir 
+
+            if (*path_copy != '\0')
+                make_dir(path_copy, permissions);
+
+            *tmp = '/'; // change null back to '/'
+        }
+
+        tmp++;
     }
+    ok = make_dir(path_copy, permissions);
+
+    free(path_copy);
+    return ok;
 }

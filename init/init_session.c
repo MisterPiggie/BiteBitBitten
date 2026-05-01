@@ -11,14 +11,14 @@ void init_CL_session(CL_session *session)
 {
     const char* config_path = get_config_dir_path();
 
-    session->config_dir_path = strdup(config_path);
-    session->resume_dir_path = build_path(config_path, "resume");
-    session->torrent_dir_path = build_path(config_path, "torrent");
+    session->config_dir_path = build_path(config_path, "bbb");
+    session->resume_dir_path = build_path(session->config_dir_path, "resume");
+    session->torrent_dir_path = build_path(session->config_dir_path, "torrent");
     
     return;
 }
 
-static char const *get_config_dir_path(void)
+char const *get_config_dir_path(void)
 {
     static const char *config_path = NULL;
 
@@ -67,7 +67,9 @@ const char *get_home_dir_path(void)
 char *build_path(const char *base_path, const char *sub_path)
 {
     size_t len = strlen(base_path) + strlen(sub_path) + 2;
-    char *out_path = malloc(len);
+    char *out_path = malloc(len * sizeof(char));
     snprintf(out_path, len, "%s/%s", base_path, sub_path);
     return out_path;
 }
+
+
