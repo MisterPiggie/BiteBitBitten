@@ -1,3 +1,4 @@
+#include <stdint.h>
 #define  DEFAULT_PORT 6881
 
 static const char charset[] = "abcdefghijklmnopqrstuvwxyz"
@@ -9,5 +10,6 @@ static const char peer_id_version[] = "-BB1313-";
 static const int peer_id_version_len = sizeof(peer_id_version) - 1; 
 
 void generate_peer_id(unsigned char peer_id[20]);
+void url_encode_hash(const uint8_t *hash_info, char *out);
 
 

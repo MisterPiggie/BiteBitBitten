@@ -1,4 +1,5 @@
-#include "http.h"
+#include "net.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -46,4 +47,13 @@ void generate_peer_id(unsigned char peer_id[20])
    return;
 }
 
-
+void url_encode_hash(const uint8_t *hash_info, char *out)
+{
+    //OUT MUST BE 61 CHARS LONG
+    int i;
+    for (i = 0; i < 20; i++)
+    {
+        sprintf(out + i*3, "%%%02X", hash_info[i]);
+    }
+    out[60] = '\0';
+}
