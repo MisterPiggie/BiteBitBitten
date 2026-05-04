@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "types/types.h"
+#include "announcer/announcer.h"
 #include "files/file_interactions.h"
 #include "parser/parser.h"
 #include "init/init_session.h"
@@ -15,6 +16,7 @@ int main(int argc, char **argv)
     BEN_parser parser;
     TR_info *info = malloc(sizeof(TR_info));
     uint8_t hash[20];
+    unsigned char peer_id[20];
     memset(hash, 0, sizeof(hash));
     CL_session *session = malloc(sizeof(CL_session)); 
 
@@ -83,6 +85,13 @@ int main(int argc, char **argv)
     printf("Hash: ");
     for(int i = 0; i < 20; i++) {
         printf("%02x", info->info_hash[i]);
+    }
+    printf("\n");
+
+    generate_peer_id(peer_id); 
+    printf("Peer ID: ");
+    for(int i = 0; i < 20; i++) {
+        printf("%c", peer_id[i]);
     }
     printf("\n");
 

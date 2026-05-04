@@ -1,7 +1,7 @@
 #include "announcer.h"
+#include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 #include <sys/random.h>
 
@@ -21,12 +21,23 @@ void generate_peer_id(unsigned char peer_id[20])
        {
            peer_id[i + peer_id_version_len] = charset[buf[i] % charset_len];
        }
-       
+
        return;
    }
-   for (i = peer_id_version_len; i < 20; i++)
+
+   FILE *f = fopen("/dev/urandom", "rb");
+   if (f) 
    {
-       peer_id[i] = charset[rand() % charset_len];
+       if (fread(buf, sizeof(unsigned char), sizeof(buf), f) == 12)
+       {
+           for (i = 0; i < (int) sizeof(buf); i++)
+           {
+               peer_id[i + peer_id_version_len] = charset[buf[i] % charset_len];
+           }
+           fclose(f);
+       }
+
+       fclose(f);
    }
 }
 
