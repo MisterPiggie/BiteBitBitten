@@ -1,4 +1,8 @@
+#include <netinet/in.h>
 #include <stdint.h>
+#include <event2/event.h>
+#include "../types/types.h"
+
 #define  DEFAULT_PORT 6881
 #define UDP_MAGIC_NUMBER 0x41727101980
 
@@ -21,11 +25,19 @@ typedef enum {
 void generate_peer_id(unsigned char peer_id[20]);
 void HTTP_url_encode_hash(const uint8_t *hash_info, char *out);
 
+
+
 typedef struct __attribute__((packed)) {
     uint64_t connection_id;
     uint32_t action;
     uint32_t transction_id;
-} udp_req_connect;
+} UDP_req_connect_packed;
+
+typedef struct {
+    uint64_t connection_id;
+    uint32_t action;
+    uint32_t transction_id;
+} UDP_req_connect;
 
 typedef struct __attribute__((packed)) {
     uint64_t connection_id;
@@ -41,6 +53,33 @@ typedef struct __attribute__((packed)) {
     uint32_t key;
     int32_t  num_want;
     uint16_t port;
-} udp_req_announce;
+} UDP_req_announce_packed;
+
+typedef struct {
+    uint64_t connection_id;
+    uint32_t action;
+    uint32_t transction_id;
+    uint8_t  hash_info[20];
+    uint8_t  peer_id[20];
+    uint64_t downloaded;
+    uint64_t left;
+    uint64_t uploaded;
+    uint32_t event;
+    uint32_t ip;
+    uint32_t key;
+    int32_t  num_want;
+    uint16_t port;
+} UDP_req_announce;
+
+typedef struct {
+    int                 UDP_sock;
+    struct event_base   *ev_base;
+} UDP_server;
+
 
 uint32_t get_random_u32(void);
+
+int tracker_connect(int sock, struct sockaddr_in *trackerr, uint32_t *tid_out);
+
+
+int tracker_string_to_NET_tracker(char *str, NET_tracker *track);

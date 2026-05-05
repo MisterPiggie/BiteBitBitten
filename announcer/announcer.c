@@ -1,4 +1,6 @@
 #include "announcer.h"
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -71,4 +73,33 @@ uint32_t get_random_u32(void)
         fclose(f);
     }
     return (uint32_t)(time(NULL) ^ getpid() ^ (uintptr_t)&x);
+}
+
+ 
+
+int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
+{
+    char *schema_end;
+    char *host_start;
+    char *colon;
+
+    schema_end = strstr(url, "://");
+    if (!schema_end)
+        return -1;
+
+    strncpy(track->schema, url, schema_end - url);
+    track->schema[schema_end - url] = '\0';
+
+    host_start = schema_end + 3;
+
+    colon = strchr(host_start, ':');
+    if (!colon)
+        return -1;
+
+    strncpy(track->host, host_start, colon - host_start);
+    track->host[colon - host_start] = '\0';
+
+    track->port = atoi(colon + 1);
+
+    return 0;
 }

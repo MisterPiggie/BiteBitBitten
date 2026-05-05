@@ -9,4 +9,5 @@ char *build_path(const char *base_path, const char *sub_path);
 const char *get_home_dir_path(void);
 const char *get_home_dir_path_from_pwd(void);
 
+//Build sockets
 
