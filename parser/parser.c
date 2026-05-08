@@ -359,7 +359,7 @@ char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
     for (i = 0; i < b_list->count; i++)
     {
         strcat(path_str, "/");
-        strncat(path_str, (char *) b_list->items[i]->string.data, b_list->items[i]->string.length);
+        strcat(path_str, BEN_string_to_C_string(&b_list->items[i]->string));
     }
 
     return path_str;
