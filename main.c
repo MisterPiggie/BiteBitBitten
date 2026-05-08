@@ -11,6 +11,7 @@
 #include "files/file_interactions.h"
 #include "parser/parser.h"
 #include "init/init_session.h"
+#include "utils/str_utils.h"
 
 int main(int argc, char **argv)
 {
@@ -20,7 +21,6 @@ int main(int argc, char **argv)
     TR_info *info = malloc(sizeof(TR_info));
     uint8_t hash[20];
     unsigned char peer_id[20];
-    NET_tracker *track = malloc(sizeof(NET_tracker));
     memset(hash, 0, sizeof(hash));
     CL_session *session = malloc(sizeof(CL_session)); 
 
@@ -70,6 +70,7 @@ int main(int argc, char **argv)
     printf("Trackers: \n");
     for (int i = 0; i < info->trackers_length; i++)
     {
+        trim_spaces(info->trackers[i].announce);
         printf("    %s\n", info->trackers[i].announce);
     }
     printf("Amount of files: %d\n", info->files_count);
@@ -101,19 +102,5 @@ int main(int argc, char **argv)
 
     printf("\n");
     printf("Parsing successful\n");
-
-    if(tracker_string_to_NET_tracker(info->trackers[0].announce, track) != 0)
-    {
-        printf("Failed to turn string into NET_tracker");
-        return -1;
-    }
-
-    struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(track->port);
-    addr.sin_addr = getaddrinfo(track->host, const char *restrict service, const struct addrinfo *restrict req, struct addrinfo **restrict pai)
-
-    
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
 
 }

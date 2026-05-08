@@ -199,7 +199,9 @@ char *BEN_string_to_C_string(const BEN_string *b_string)
 
 bool BEN_string_equals(BEN_string *b_key, const char *key)
 {
-    if (strcmp(BEN_string_to_C_string(b_key), key) == 0)
+    if (b_key->length != strlen(key))
+            return false;
+    if (strncmp((char *)b_key->data, key, b_key->length) == 0) //CHANGED MEMORY LEAK
         return true;
     return false;
 }
@@ -347,6 +349,7 @@ char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
 {
     int path_length = 0, i = 0;
     char *path_str;
+    char *filename;
     for (i = 0; i < b_list->count; i++)
     {
         path_length += b_list->items[i]->string.length;
@@ -358,8 +361,10 @@ char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
 
     for (i = 0; i < b_list->count; i++)
     {
+        filename = BEN_string_to_C_string(&b_list->items[i]->string);
         strcat(path_str, "/");
-        strcat(path_str, BEN_string_to_C_string(&b_list->items[i]->string));
+        strcat(path_str, filename); //NEED TO CHANGE
+        free(filename);
     }
 
     return path_str;
