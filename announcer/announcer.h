@@ -33,11 +33,24 @@ typedef struct __attribute__((packed)) {
     uint32_t transction_id;
 } UDP_req_connect_packed;
 
+typedef struct __attribute__((packed)) {
+    uint32_t action;
+    uint32_t transction_id;
+    uint64_t connection_id;
+} UDP_resp_connect_packed;
+
 typedef struct {
     uint64_t connection_id;
     uint32_t action;
     uint32_t transction_id;
 } UDP_req_connect;
+
+typedef struct {
+    uint32_t action;
+    uint32_t transction_id;
+    uint64_t connection_id;
+} UDP_resp_connect;
+
 
 typedef struct __attribute__((packed)) {
     uint64_t connection_id;
@@ -83,3 +96,6 @@ int tracker_connect(int sock, struct sockaddr_in *trackerr, uint32_t *tid_out);
 
 
 int tracker_string_to_NET_tracker(char *str, NET_tracker *track);
+
+int UDP_send_connect_req(int sock, struct sockaddr *addr);
+int UDP_resolve_tracker(NET_tracker *track, struct sockaddr_in *addr);

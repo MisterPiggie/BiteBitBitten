@@ -1,3 +1,4 @@
+#include <endian.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stddef.h>
@@ -6,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <time.h>
 #include "types/types.h"
 #include "announcer/announcer.h"
 #include "files/file_interactions.h"
@@ -15,6 +17,7 @@
 
 int main(int argc, char **argv)
 {
+    int i;
     file_content_buffer buffer;
     BEN_value *top_dict;
     BEN_parser parser;
@@ -102,5 +105,32 @@ int main(int argc, char **argv)
 
     printf("\n");
     printf("Parsing successful\n");
+
+    printf("Starting NET connections\n");
+
+    NET_tracker *tracks = calloc( info->trackers_length, sizeof(NET_tracker));
+
+    for (i = 0; i < info->trackers_length; i++)
+    {
+        tracker_string_to_NET_tracker(info->trackers[i].announce, &tracks[i]);
+        printf("Schema: %s\n", tracks[i].schema);
+        printf("Host: %s\n", tracks[i].host);
+        printf("Path: %s\n", tracks[i].path);
+        printf("Port: %d\n", tracks[i].port);
+    }
+
+    struct sockaddr_in addr;
+    UDP_resolve_tracker(&tracks[1], &addr);
+
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    UDP_send_connect_req(sock, (struct sockaddr *)&addr);
+
+    UDP_resp_connect_packed resp;
+
+    recvfrom(sock, &resp, sizeof(resp), 0, NULL, NULL);
+
+    printf("Action: %d\n", be16toh(resp.action));
+    printf("connection_id: %u\n", be32toh(resp.connection_id));
+    printf("transction_id: %d\n", be32toh(resp.transction_id));
 
 }

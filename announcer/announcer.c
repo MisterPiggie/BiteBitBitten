@@ -81,14 +81,14 @@ int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
 {
     char *schema_end;
     char *host_start;
+    char *path_start;
     char *colon;
 
     schema_end = strstr(url, "://");
     if (!schema_end)
         return -1;
 
-    strncpy(track->schema, url, schema_end - url);
-    track->schema[schema_end - url] = '\0';
+    track->schema = strndup(url, schema_end - url);
 
     host_start = schema_end + 3;
 
@@ -96,10 +96,12 @@ int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
     if (!colon)
         return -1;
 
-    strncpy(track->host, host_start, colon - host_start);
-    track->host[colon - host_start] = '\0';
+    track->host = strndup(host_start, colon - host_start);
 
     track->port = atoi(colon + 1);
+
+    path_start = strchr(colon + 1, '/');
+    track->path = path_start ? strdup(path_start) : strdup("/");
 
     return 0;
 }
