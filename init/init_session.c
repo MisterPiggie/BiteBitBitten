@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <pwd.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 
 void init_CL_session(CL_session *session)
@@ -17,6 +19,13 @@ void init_CL_session(CL_session *session)
     session->torrent_dir_path = build_path(session->config_dir_path, "torrent");
     
     return;
+}
+
+int UDP_session_init(CL_session *session)
+{
+    session->udp_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (session->udp_socket == 
+    return 0;
 }
 
 char const *get_config_dir_path(void)

@@ -10,4 +10,4 @@ const char *get_home_dir_path(void);
 const char *get_home_dir_path_from_pwd(void);
 
 //Build sockets
-
+int UDP_session_init(CL_session *session);

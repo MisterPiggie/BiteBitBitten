@@ -109,8 +109,7 @@ typedef struct {
     char *torrent_dir_path;
     char *config_dir_path;
     char *config_file_path;
-
-    
+    int  udp_socket;
 } CL_session;
 
 
