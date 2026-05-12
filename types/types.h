@@ -101,6 +101,42 @@ typedef struct {
 } TR_info;
 
 
+
+
+
+
+
+
+typedef struct {
+    uint64_t connection_id;
+    uint32_t action;
+    uint32_t transction_id;
+    uint8_t  hash_info[20];
+    uint8_t  peer_id[20];
+    uint64_t downloaded;
+    uint64_t left;
+    uint64_t uploaded;
+    uint32_t event;
+    uint32_t ip;
+    uint32_t key;
+    int32_t  num_want;
+    uint16_t port;
+} UDP_request;
+
+
+
+typedef struct {
+    char     *schema;
+    char     *host;
+    char     *path;
+    uint16_t port;
+
+    uint64_t connection_id;
+
+    UDP_request *reqs;
+} NET_tracker;
+
+
 //Client structs
 
 typedef struct {
@@ -109,16 +145,11 @@ typedef struct {
     char *torrent_dir_path;
     char *config_dir_path;
     char *config_file_path;
-    int  udp_socket;
 } CL_session;
 
-
 typedef struct {
-    char     *schema;
-    char     *host;
-    char     *path;
-    uint16_t port;
-} NET_tracker;
-
+    int  udp_socket;
+    NET_tracker *trackers;
+} CL_announcer;
 
 #endif 

@@ -27,69 +27,6 @@ void HTTP_url_encode_hash(const uint8_t *hash_info, char *out);
 
 
 
-typedef struct __attribute__((packed)) {
-    uint64_t connection_id;
-    uint32_t action;
-    uint32_t transction_id;
-} UDP_req_connect_packed;
-
-typedef struct __attribute__((packed)) {
-    uint32_t action;
-    uint32_t transction_id;
-    uint64_t connection_id;
-} UDP_resp_connect_packed;
-
-typedef struct {
-    uint64_t connection_id;
-    uint32_t action;
-    uint32_t transction_id;
-} UDP_req_connect;
-
-typedef struct {
-    uint32_t action;
-    uint32_t transction_id;
-    uint64_t connection_id;
-} UDP_resp_connect;
-
-
-typedef struct __attribute__((packed)) {
-    uint64_t connection_id;
-    uint32_t action;
-    uint32_t transction_id;
-    uint8_t  hash_info[20];
-    uint8_t  peer_id[20];
-    uint64_t downloaded;
-    uint64_t left;
-    uint64_t uploaded;
-    uint32_t event;
-    uint32_t ip;
-    uint32_t key;
-    int32_t  num_want;
-    uint16_t port;
-} UDP_req_announce_packed;
-
-typedef struct {
-    uint64_t connection_id;
-    uint32_t action;
-    uint32_t transction_id;
-    uint8_t  hash_info[20];
-    uint8_t  peer_id[20];
-    uint64_t downloaded;
-    uint64_t left;
-    uint64_t uploaded;
-    uint32_t event;
-    uint32_t ip;
-    uint32_t key;
-    int32_t  num_want;
-    uint16_t port;
-} UDP_req_announce;
-
-typedef struct {
-    int                 UDP_sock;
-    struct event_base   *ev_base;
-} UDP_server;
-
-
 uint32_t get_random_u32(void);
 
 int tracker_connect(int sock, struct sockaddr_in *trackerr, uint32_t *tid_out);
@@ -97,5 +34,8 @@ int tracker_connect(int sock, struct sockaddr_in *trackerr, uint32_t *tid_out);
 
 int tracker_string_to_NET_tracker(char *str, NET_tracker *track);
 
-int UDP_send_connect_req(int sock, struct sockaddr *addr);
-int UDP_resolve_tracker(NET_tracker *track, struct sockaddr_in *addr);
+int UDP_send_connect_req(CL_announcer *ann, NET_tracker *track);
+int UDP_sendto(int sock, NET_tracker *track, const uint8_t *buf, size_t len);
+void UDP_construct_connect_body(uint8_t buf[16], uint32_t id);
+int UDP_recv(int sock, uint8_t *buf, size_t len);
+int UDP_recv_connect_req(CL_announcer *ann, NET_tracker *track);

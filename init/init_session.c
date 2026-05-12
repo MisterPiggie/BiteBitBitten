@@ -1,4 +1,5 @@
 #include "init_session.h"
+#include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -21,10 +22,13 @@ void init_CL_session(CL_session *session)
     return;
 }
 
-int UDP_session_init(CL_session *session)
+int init_CL_announcer(CL_announcer *ann)
 {
-    session->udp_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (session->udp_socket == 
+    ann->udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (ann->udp_socket == -1)
+        return -1;
+    struct timeval tv = { .tv_sec = 3, .tv_usec = 0};
+    setsockopt(ann->udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     return 0;
 }
 

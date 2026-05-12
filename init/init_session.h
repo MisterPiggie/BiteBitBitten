@@ -3,6 +3,7 @@
 //Init funcs for Client
 const char *get_config_dir_path(void);
 void init_CL_session(CL_session *session);
+int init_CL_announcer(CL_announcer *ann);
 
 //Helper init funcs 
 char *build_path(const char *base_path, const char *sub_path);

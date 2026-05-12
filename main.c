@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <time.h>
 #include "types/types.h"
 #include "announcer/announcer.h"
 #include "files/file_interactions.h"
@@ -17,7 +16,7 @@
 
 int main(int argc, char **argv)
 {
-    int i;
+    int err, i;
     file_content_buffer buffer;
     BEN_value *top_dict;
     BEN_parser parser;
@@ -119,18 +118,34 @@ int main(int argc, char **argv)
         printf("Port: %d\n", tracks[i].port);
     }
 
-    struct sockaddr_in addr;
-    UDP_resolve_tracker(&tracks[1], &addr);
+    CL_announcer ann;
 
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    UDP_send_connect_req(sock, (struct sockaddr *)&addr);
+    i = init_CL_announcer(&ann);
+    if  (i != 0)
+    {
+        printf("ERROR: init CL announcer");
+        return 1;
+    }
 
-    UDP_resp_connect_packed resp;
+    for (i = 0; i < info->trackers_length; i++)
+    {
+        err = UDP_send_connect_req(&ann, &tracks[i]);
+        if (err != 0)
+        {
+            printf("ERROR: send connect req\n");
+            continue;
+        }
+        printf("Connection ID before recv: %lu\n", tracks[i].connection_id);
 
-    recvfrom(sock, &resp, sizeof(resp), 0, NULL, NULL);
+        err = UDP_recv_connect_req(&ann, &tracks[i]);
+        if (err != 0)
+        {
+            printf("ERROR: send recv req\n");
+            continue;
+        }
 
-    printf("Action: %d\n", be16toh(resp.action));
-    printf("connection_id: %u\n", be32toh(resp.connection_id));
-    printf("transction_id: %d\n", be32toh(resp.transction_id));
+        printf("Connection ID after recv: %lu\n", tracks[i].connection_id);
+    }
 
+    return 0;
 }
