@@ -34,8 +34,11 @@ int tracker_connect(int sock, struct sockaddr_in *trackerr, uint32_t *tid_out);
 
 int tracker_string_to_NET_tracker(char *str, NET_tracker *track);
 
-int UDP_send_connect_req(CL_announcer *ann, NET_tracker *track);
+int UDP_send_connect_req(int sock, NET_tracker *track);
 int UDP_sendto(int sock, NET_tracker *track, const uint8_t *buf, size_t len);
 void UDP_construct_connect_body(uint8_t buf[16], uint32_t id);
 int UDP_recv(int sock, uint8_t *buf, size_t len);
-int UDP_recv_connect_req(CL_announcer *ann, NET_tracker *track);
+int UDP_recv_connect_req(int sock, NET_tracker *track);
+int UDP_send_announce_req(CL_session *session, TR_torrent *torrent, UDP_request *req);
+void construct_UDP_request(UDP_request *req, TR_torrent *torrent);
+int UDP_recv_announce_resp(int sock);

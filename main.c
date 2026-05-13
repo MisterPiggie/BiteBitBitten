@@ -25,6 +25,7 @@ int main(int argc, char **argv)
     unsigned char peer_id[20];
     memset(hash, 0, sizeof(hash));
     CL_session *session = malloc(sizeof(CL_session)); 
+    TR_torrent *torrent = malloc(sizeof(TR_torrent));
 
     if (argc != 2) 
     {
@@ -105,46 +106,45 @@ int main(int argc, char **argv)
     printf("\n");
     printf("Parsing successful\n");
 
+    init_TR_torrent(torrent, info);
+
     printf("Starting NET connections\n");
 
-    NET_tracker *tracks = calloc( info->trackers_length, sizeof(NET_tracker));
 
-    for (i = 0; i < info->trackers_length; i++)
+    for (i = 0; i < torrent->tracker_count; i++)
     {
-        tracker_string_to_NET_tracker(info->trackers[i].announce, &tracks[i]);
-        printf("Schema: %s\n", tracks[i].schema);
-        printf("Host: %s\n", tracks[i].host);
-        printf("Path: %s\n", tracks[i].path);
-        printf("Port: %d\n", tracks[i].port);
-    }
-
-    CL_announcer ann;
-
-    i = init_CL_announcer(&ann);
-    if  (i != 0)
-    {
-        printf("ERROR: init CL announcer");
-        return 1;
+        printf("Schema: %s\n", torrent->tracks[i].schema);
+        printf("Host: %s\n", torrent->tracks[i].host);
+        printf("Path: %s\n", torrent->tracks[i].path);
+        printf("Port: %d\n", torrent->tracks[i].port);
     }
 
     for (i = 0; i < info->trackers_length; i++)
     {
-        err = UDP_send_connect_req(&ann, &tracks[i]);
+        err = UDP_send_connect_req(session->udp_socket, &torrent->tracks[i]);
         if (err != 0)
         {
             printf("ERROR: send connect req\n");
             continue;
         }
-        printf("Connection ID before recv: %lu\n", tracks[i].connection_id);
+        printf("Connection ID before recv: %lu\n", torrent->tracks[i].connection_id);
 
-        err = UDP_recv_connect_req(&ann, &tracks[i]);
+        err = UDP_recv_connect_req(session->udp_socket, &torrent->tracks[i]);
         if (err != 0)
         {
             printf("ERROR: send recv req\n");
             continue;
         }
 
-        printf("Connection ID after recv: %lu\n", tracks[i].connection_id);
+        printf("Connection ID after recv: %lu\n", torrent->tracks[i].connection_id);
+        torrent->active_tracker_idx = i;
+        UDP_request req;
+        construct_UDP_request(&req, torrent);
+        if(UDP_send_announce_req(session, torrent, &req) != 0)
+            printf("ERROR: send announce req\n");
+
+        if(UDP_recv_announce_resp(session->udp_socket) != 0)
+            printf("ERROR: recv announce resp\n");
     }
 
     return 0;

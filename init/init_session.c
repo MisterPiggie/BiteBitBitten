@@ -1,4 +1,5 @@
 #include "init_session.h"
+#include "../announcer/announcer.h"
 #include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,18 +19,15 @@ void init_CL_session(CL_session *session)
     session->config_file_path = build_path(session->config_dir_path, "config.pig");
     session->resume_dir_path = build_path(session->config_dir_path, "resume");
     session->torrent_dir_path = build_path(session->config_dir_path, "torrent");
-    
-    return;
-}
 
-int init_CL_announcer(CL_announcer *ann)
-{
-    ann->udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (ann->udp_socket == -1)
-        return -1;
+    generate_peer_id(session->peer_id);
+    
+    session->udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (session->udp_socket == -1)
+        return;
     struct timeval tv = { .tv_sec = 3, .tv_usec = 0};
-    setsockopt(ann->udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    return 0;
+    setsockopt(session->udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    return;
 }
 
 char const *get_config_dir_path(void)
@@ -86,4 +84,26 @@ char *build_path(const char *base_path, const char *sub_path)
     return out_path;
 }
 
+void init_TR_torrent(TR_torrent *torrent, TR_info *info)
+{
+    int i;
+
+    torrent->downloaded = 0;
+    torrent->uploaded = 0;
+
+    torrent->info = info;
+    torrent->tracker_count = info->trackers_length;
+
+    torrent->tracks = malloc(sizeof(NET_tracker) * torrent->tracker_count);
+    if (torrent->tracks == NULL)
+        return;
+
+    for (i = 0; i < torrent->tracker_count; i++)
+    {
+        if(tracker_string_to_NET_tracker(info->trackers[i].announce, &torrent->tracks[i]) != 0)
+            return;
+        torrent->tracks[i].key = get_random_u32();
+    }
+    
+}
 

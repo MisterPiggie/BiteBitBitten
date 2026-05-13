@@ -103,5 +103,7 @@ int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
     path_start = strchr(colon + 1, '/');
     track->path = path_start ? strdup(path_start) : strdup("/");
 
+    track->reqs_count = 0;
+
     return 0;
 }

@@ -1,7 +1,6 @@
 #include "parser.h"
 #include "../SHA1/SHA1.h"
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -310,7 +309,6 @@ void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
     } else if ((announce_list = get_BEN_value_by_key(pairs, "announce")))
     {   
         info->trackers_length++;
-        printf("First trackers length: %d\n", info->trackers_length);
         info->trackers[temp_trackers_length].announce = BEN_string_to_C_string(&announce_list->string);
         info->trackers[temp_trackers_length].tier = 0;
         temp_trackers_length++;
