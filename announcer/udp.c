@@ -223,8 +223,9 @@ int UDP_recv(int sock, uint8_t *buf, size_t len)
     return (int)recieved;
 }
 
-void construct_UDP_request(UDP_request *req, TR_torrent *torrent)
+UDP_request *construct_UDP_request(TR_torrent *torrent)
 {
+    UDP_request *req = malloc(sizeof(UDP_request));
     req->transction_id = get_random_u32();
     req->connection_id = torrent->tracks[torrent->active_tracker_idx].connection_id;
     req->downloaded = 0;

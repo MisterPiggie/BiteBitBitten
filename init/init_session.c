@@ -11,9 +11,10 @@
 #include <netinet/in.h>
 
 
-void init_CL_session(CL_session *session)
+CL_session *init_CL_session(void)
 {
     const char* config_path = get_config_dir_path();
+    CL_session *session = malloc(sizeof(CL_session));
 
     session->config_dir_path = build_path(config_path, "bbb");
     session->config_file_path = build_path(session->config_dir_path, "config.pig");
@@ -24,10 +25,10 @@ void init_CL_session(CL_session *session)
     
     session->udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (session->udp_socket == -1)
-        return;
+        return session;
     struct timeval tv = { .tv_sec = 3, .tv_usec = 0};
     setsockopt(session->udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    return;
+    return session;
 }
 
 char const *get_config_dir_path(void)
@@ -84,10 +85,11 @@ char *build_path(const char *base_path, const char *sub_path)
     return out_path;
 }
 
-void init_TR_torrent(TR_torrent *torrent, TR_info *info)
+TR_torrent *init_TR_torrent(TR_info *info)
 {
     int i;
 
+    TR_torrent *torrent = malloc(sizeof(TR_torrent));
     torrent->downloaded = 0;
     torrent->uploaded = 0;
 

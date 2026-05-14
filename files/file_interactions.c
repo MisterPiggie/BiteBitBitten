@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/stat.h>
 
-file_content_buffer read_BEN_file(char *file_path)
+file_content_buffer *read_BEN_file(char *file_path)
 {
     file_content_buffer buffer = {0};
     FILE *fp = fopen(file_path, "rb");

@@ -16,7 +16,7 @@ static const char peer_id_version[] = "-BB1313-";
 static const int peer_id_version_len = sizeof(peer_id_version) - 1; 
 
 typedef enum {
-    UDP_ACTION_CONNECT  = 0,
+    UDP_ACTION_CONNECT  = 0, 
     UDP_ACTION_ANNOUNCE = 1,
     UDP_ACTION_SCRAPE   = 2,
     UDP_ACTION_ERROR    = 3,
@@ -40,5 +40,5 @@ void UDP_construct_connect_body(uint8_t buf[16], uint32_t id);
 int UDP_recv(int sock, uint8_t *buf, size_t len);
 int UDP_recv_connect_req(int sock, NET_tracker *track);
 int UDP_send_announce_req(CL_session *session, TR_torrent *torrent, UDP_request *req);
-void construct_UDP_request(UDP_request *req, TR_torrent *torrent);
+UDP_request *construct_UDP_request(TR_torrent *torrent);
 int UDP_recv_announce_resp(int sock);
