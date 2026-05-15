@@ -5,7 +5,7 @@
 
 
 //parser init
-BEN_parser *init_BEN_parser(file_content_buffer buffer);
+BEN_parser *init_BEN_parser(file_content_buffer *buffer);
 BEN_value *parse_file_content_buffer(BEN_parser *parser);
 
 //parser helper funcs

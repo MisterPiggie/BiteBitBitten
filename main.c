@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     make_dir_recursive(session->resume_dir_path, 0755);
     make_dir_recursive(session->torrent_dir_path, 0755);
 
-    init_BEN_parser(buffer, &parser);
+    init_BEN_parser(buffer);
     top_dict = parse_file_content_buffer(&parser);
 
     if (top_dict->dict.count == 0)

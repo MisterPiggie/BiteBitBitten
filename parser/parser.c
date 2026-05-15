@@ -1,14 +1,23 @@
 #include "parser.h"
 #include "../SHA1/SHA1.h"
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 
-void init_BEN_parser(file_content_buffer buffer, BEN_parser *parser)
+BEN_parser *init_BEN_parser(file_content_buffer *buffer)
 {
-    parser->buffer = buffer;
+    BEN_parser *parser = malloc(sizeof(BEN_parser));
+    if (!parser)
+    {
+        puts("ERROR: couldnt malloc parser");
+        return NULL;
+    }
+    parser->buffer = *buffer;
     parser->cursor = 0;
+
+    return parser;
 }
 
 BEN_value *parse_file_content_buffer(BEN_parser *parser)
