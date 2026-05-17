@@ -236,4 +236,6 @@ UDP_request *construct_UDP_request(TR_torrent *torrent)
     req->num_want = -1;
     req->key = torrent->tracks[torrent->active_tracker_idx].key;
     req->hash_info = torrent->info->info_hash;
+
+    return req;
 }

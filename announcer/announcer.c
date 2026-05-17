@@ -89,6 +89,11 @@ int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
         return -1;
 
     track->schema = strndup(url, schema_end - url);
+    if (track->schema == NULL)
+    {
+        printf("ERROR: not enough memory for torrent struct\n");
+        return -1;
+    }
 
     host_start = schema_end + 3;
 
@@ -97,6 +102,11 @@ int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
         return -1;
 
     track->host = strndup(host_start, colon - host_start);
+    if (track->host == NULL)
+    {
+        printf("ERROR: not enough memory for torrent struct\n");
+        return -1;
+    }
 
     track->port = atoi(colon + 1);
 
@@ -106,4 +116,18 @@ int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
     track->reqs_count = 0;
 
     return 0;
+}
+
+void free_NET_trackers_from_TR_torrent(TR_torrent *torrent)
+{
+    int i;
+    for (i = 0; i < torrent->tracker_count ; i++)
+    {
+        free(torrent->tracks[i].host);
+        free(torrent->tracks[i].schema);
+        free(torrent->tracks[i].path);
+        free(&torrent->tracks[i]);
+    }
+
+    return;
 }

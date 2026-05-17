@@ -1,5 +1,6 @@
 #include "init_session.h"
 #include "../announcer/announcer.h"
+#include "../parser/parser.h"
 #include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,13 +14,15 @@
 
 CL_session *init_CL_session(void)
 {
-    const char* config_path = get_config_dir_path();
+    const char *config_path = get_config_dir_path();
+    const char *home_path = get_home_dir_path();
     CL_session *session = malloc(sizeof(CL_session));
 
     session->config_dir_path = build_path(config_path, "bbb");
     session->config_file_path = build_path(session->config_dir_path, "config.pig");
     session->resume_dir_path = build_path(session->config_dir_path, "resume");
     session->torrent_dir_path = build_path(session->config_dir_path, "torrent");
+    session->download_folder_path = build_path(home_path, "bbb_download");
 
     generate_peer_id(session->peer_id);
     
@@ -90,6 +93,11 @@ TR_torrent *init_TR_torrent(TR_info *info)
     int i;
 
     TR_torrent *torrent = malloc(sizeof(TR_torrent));
+    if (!torrent)
+    {
+        printf("ERROR: not enough memory to init torrent\n");
+        return NULL;
+    }
     torrent->downloaded = 0;
     torrent->uploaded = 0;
 
@@ -98,14 +106,30 @@ TR_torrent *init_TR_torrent(TR_info *info)
 
     torrent->tracks = malloc(sizeof(NET_tracker) * torrent->tracker_count);
     if (torrent->tracks == NULL)
-        return;
+    {
+        free(torrent);
+        printf("ERROR: not enough memory to init torrent\n");
+        return NULL;
+    }
 
     for (i = 0; i < torrent->tracker_count; i++)
     {
         if(tracker_string_to_NET_tracker(info->trackers[i].announce, &torrent->tracks[i]) != 0)
-            return;
+        {
+            printf("ERROR: not enough memory to init torrent\n");
+            free_NET_trackers_from_TR_torrent(torrent);
+            return NULL;
+        }
         torrent->tracks[i].key = get_random_u32();
     }
+
+    return torrent;
     
 }
 
+void free_TR_torrent(TR_torrent *torrent)
+{
+    free_NET_trackers_from_TR_torrent(torrent);
+    free_TR_info(torrent->info);
+    free(torrent);
+}

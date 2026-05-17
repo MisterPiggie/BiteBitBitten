@@ -11,6 +11,7 @@ BEN_value *parse_file_content_buffer(BEN_parser *parser);
 //parser helper funcs
 unsigned char peek(BEN_parser *parser);
 unsigned char consume(BEN_parser *parser);
+void free_BEN_value(BEN_value *dict);
 
 BEN_string parse_raw_string(BEN_parser *parser);
 
@@ -28,12 +29,13 @@ void skip_value(BEN_parser *parser);
 void get_info_hash(BEN_parser *parser, unsigned char info_hash[20]);
 
 //parsing inside struct 
-void BEN_pairs_to_TR_info(const BEN_pairs *pairs, TR_info *info);
+TR_info *BEN_pairs_to_TR_info(const BEN_pairs *pairs);
 void fill_in_calculated_field_in_TR_info(TR_info *info);
+void free_TR_info(TR_info *info);
 
 //complex operations inside BEN_pairs_to_TR_info
-void parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info);
-void parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info);
+bool parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info);
+bool parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info);
 
 //BEN to TR helper funcs
 BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key); 

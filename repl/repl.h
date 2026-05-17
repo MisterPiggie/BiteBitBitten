@@ -1,13 +1,34 @@
+#include "../types/types.h"
 
 #define MAX_CHARS 512
 #define MAX_ARGS 16
-
-
-
 int tokenize(char *line, char **argv, int max_args);
 
-void CMD_add(int argc, char **argv);
-void CMD_print(int argc, char **argv);
-void CMD_delete(int argc, char **argv);
-void CMD_connect(int argc, char **argv);
-void CMD_help(int argc, char **argv);
+void CMD_add(CL_session *session, int argc, char **argv);
+void CMD_print(CL_session *session, int argc, char **argv);
+// void CMD_delete(CL_session *session, int argc, char **argv);
+// void CMD_connect(CL_session *session, int argc, char **argv);
+// void CMD_help(CL_session *session, int argc, char **argv);
+
+void dispatch(CL_session *seesion, int argc, char *argv[]);
+
+
+typedef void (*CMD_fn)(CL_session *session, int argc, char **argv);
+
+typedef struct {
+    const char *name;
+    CMD_fn     fn;
+} CMD_command;
+
+static const CMD_command CMD_commands[] =
+{
+    {"add", CMD_add},
+    {"print", CMD_print},
+    // {"delete", CMD_delete},
+    // {"connect", CMD_connect},
+    // {"help", CMD_help},
+};
+
+static const int NUM_COMMANDS = sizeof(CMD_commands) / sizeof(CMD_commands[0]);
+
+

@@ -154,7 +154,7 @@ typedef struct {
 
     uint8_t      peer_id[20];
     int          udp_socket;
-    TR_torrent   *torrents;
+    TR_torrent   **torrents;
     int          torrents_count;
 
 } CL_session;
