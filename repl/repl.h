@@ -6,7 +6,8 @@ int tokenize(char *line, char **argv, int max_args);
 
 void CMD_add(CL_session *session, int argc, char **argv);
 void CMD_print(CL_session *session, int argc, char **argv);
-// void CMD_delete(CL_session *session, int argc, char **argv);
+void CMD_delete(CL_session *session, int argc, char **argv);
+void CMD_list(CL_session *session, int argc, char **argv);
 // void CMD_connect(CL_session *session, int argc, char **argv);
 // void CMD_help(CL_session *session, int argc, char **argv);
 
@@ -24,7 +25,8 @@ static const CMD_command CMD_commands[] =
 {
     {"add", CMD_add},
     {"print", CMD_print},
-    // {"delete", CMD_delete},
+    {"delete", CMD_delete},
+    {"list", CMD_list},
     // {"connect", CMD_connect},
     // {"help", CMD_help},
 };
@@ -32,3 +34,4 @@ static const CMD_command CMD_commands[] =
 static const int NUM_COMMANDS = sizeof(CMD_commands) / sizeof(CMD_commands[0]);
 
 
+int id_from_arg(const char *str, int *out);

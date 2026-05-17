@@ -126,8 +126,8 @@ void free_NET_trackers_from_TR_torrent(TR_torrent *torrent)
         free(torrent->tracks[i].host);
         free(torrent->tracks[i].schema);
         free(torrent->tracks[i].path);
-        free(&torrent->tracks[i]);
     }
+    free(torrent->tracks);
 
     return;
 }

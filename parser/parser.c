@@ -607,21 +607,23 @@ void free_TR_info(TR_info *info)
 {
     int i;
 
-    free(info->comment);
-    free(info->created_by);
-    free(info->name);
-    free(info->torrent_path);
-    free(info->pieces);
+    printf("freeing comment\n");    free(info->comment);
+    printf("freeing created_by\n"); free(info->created_by);
+    printf("freeing name\n");       free(info->name);
+    printf("freeing pieces\n");     free(info->pieces);
 
     for (i = 0; i < info->trackers_length; i++)
     {
+        printf("freeing tracker %d announce\n", i);
         free(info->trackers[i].announce);
-        free(&info->trackers[i]);
     }
+    printf("freeing trackers array\n"); free(info->trackers);
 
     for (i = 0; i < info->files_count; i++)
     {
+        printf("freeing file %d path\n", i);
         free(info->files[i].path);
-        free(&info->files[i]);
     }
+    printf("freeing files array\n"); free(info->files);
+    printf("freeing info\n");        free(info);
 }

@@ -10,3 +10,4 @@ const char *get_home_dir_path(void);
 const char *get_home_dir_path_from_pwd(void);
 
 TR_torrent *init_TR_torrent(TR_info *info);
+void free_TR_torrent(TR_torrent *torrent);
