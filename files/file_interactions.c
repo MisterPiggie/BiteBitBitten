@@ -5,17 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include "../arena/arena.h"
 
-file_content_buffer *read_BEN_file(char *file_path)
+file_content_buffer *read_BEN_file(Arena *arena, char *file_path)
 {
     FILE *fp;
     size_t bytes_read;
-    file_content_buffer *buffer = malloc(sizeof(file_content_buffer));
-    if (!buffer)
-    {
-        puts("ERROR: could not malloc buffer");
-        return NULL;
-    }
+    file_content_buffer *buffer = arena_push_struct(arena, file_content_buffer);
 
     buffer->data = NULL;
     buffer->size = 0;
@@ -23,7 +19,6 @@ file_content_buffer *read_BEN_file(char *file_path)
     fp = fopen(file_path, "rb");
     if (!fp)
     {
-        free(buffer);
         puts("ERROR: could not open file");
         return NULL;
     }
@@ -32,20 +27,11 @@ file_content_buffer *read_BEN_file(char *file_path)
     buffer->size = ftell(fp);
     rewind(fp);
 
-    buffer->data = malloc(buffer->size);
-    if (!buffer->data)
-    {
-        fclose(fp);
-        free(buffer);
-        puts("ERROR: could not malloc buffer->data");
-        return NULL;
-    }
+    buffer->data = arena_push_array(arena, unsigned char, buffer->size);
 
     bytes_read = fread(buffer->data, sizeof(unsigned char), buffer->size, fp);
     if (bytes_read != buffer->size)
     {
-        free(buffer->data);
-        free(buffer);
         puts("ERROR: could not read .torrent file entaerly");
         return NULL;
     }

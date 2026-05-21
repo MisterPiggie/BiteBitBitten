@@ -29,15 +29,13 @@ typedef struct {
 } BEN_string;
 
 
-typedef struct {
+typedef struct BEN_pair BEN_pair;
+struct BEN_pair{
     BEN_string key;
     BEN_value *value;
-} BEN_pair;
+    BEN_pair  *next;
+};
 
-typedef struct {
-    BEN_pair *BEN_pairs;
-    int count;
-} BEN_pairs;
 
 typedef struct {
     file_content_buffer buffer;
@@ -56,7 +54,7 @@ struct BEN_value {
         int64_t number;
         BEN_string string;
         BEN_list list;
-        BEN_pairs dict;
+        BEN_pair dict;
     };
 };
 

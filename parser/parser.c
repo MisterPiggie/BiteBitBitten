@@ -7,48 +7,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../arena/arena.h"
 
 
-BEN_parser *init_BEN_parser(file_content_buffer *buffer)
+BEN_parser *init_BEN_parser(Arena *arena, file_content_buffer *buffer)
 {
-    BEN_parser *parser = malloc(sizeof(BEN_parser));
-    if (!parser)
-    {
-        puts("ERROR: couldnt malloc parser");
-        return NULL;
-    }
+    BEN_parser *parser = arena_push_struct(arena, BEN_parser);
     parser->buffer = *buffer;
     parser->cursor = 0;
 
     return parser;
 }
 
-BEN_value *parse_file_content_buffer(BEN_parser *parser)
+
+
+BEN_value *parse_dict(Arena *arena, BEN_parser *parser)
 {
-    BEN_value *ret_dict;
+    BEN_pair *tmp_pair;
+    BEN_pair *last = NULL;
 
-    ret_dict = parse_dict(parser);
-
-    return ret_dict;
-}
-
-
-BEN_value *parse_dict(BEN_parser *parser)
-{
-    BEN_string key;
-    BEN_value *value; 
-    BEN_pair *tmp_pairs;
-
-    BEN_value *return_dict= malloc(sizeof(BEN_value));
-    if (!return_dict)
-    {
-        printf("ERROR: does not have enough memory for parsing\n");
-        return NULL;
-    }
+    BEN_value *return_dict = arena_push_struct(arena, BEN_value);
 
     return_dict->type = BENCODE_DICT;
-    return_dict->dict.BEN_pairs = NULL;
-    return_dict->dict.count = 0;
+    return_dict->dict = NULL;
 
     if (consume(parser) != 'd')
     {
@@ -58,27 +39,19 @@ BEN_value *parse_dict(BEN_parser *parser)
 
     while(peek(parser) != 'e')
     {
-        key = parse_raw_string(parser);
-        value = parse_value(parser);
-        if (!value)
-        {
-            printf("ERROR: value not returned\n");
+        tmp_pair        = arena_push_struct(arena, BEN_pair);
+        tmp_pair->key   = parse_raw_string(parser);
+        tmp_pair->value = parse_value(arena, parser);
+        tmp_pair->next  = NULL;
+        if (!tmp_pair->value)
             return NULL;
-        }
 
-        tmp_pairs = realloc(
-                return_dict->dict.BEN_pairs,
-                sizeof(BEN_pair) * (return_dict->dict.count + 1)
-               );
-        if (!tmp_pairs)
-        {
-            printf("ERROR: does not have enough memory for parsing\n");
-            return NULL;
-        }
-        return_dict->dict.BEN_pairs = tmp_pairs;
-        return_dict->dict.BEN_pairs[return_dict->dict.count].key = key;
-        return_dict->dict.BEN_pairs[return_dict->dict.count].value = value;
-        return_dict->dict.count++;
+        if (last)
+            last->next        = tmp_pair;
+        else
+            return_dict->dict = tmp_pair;
+
+        last = tmp_pair;
     }
     if (consume(parser) != 'e')
     {
@@ -88,30 +61,21 @@ BEN_value *parse_dict(BEN_parser *parser)
     return return_dict;
 }
 
-BEN_value *parse_string(BEN_parser *parser)
+BEN_value *parse_string(Arena *arena, BEN_parser *parser)
 {
-    BEN_value *return_val = malloc(sizeof(BEN_value));
-    if (!return_val)
-    {
-        printf("ERROR: does not have enough memory for parsing\n");
-        return NULL;
-    }
+    BEN_value *return_val = arena_push_struct(arena, BEN_value);
+
     return_val->type = BENCODE_STRING;
     return_val->string = parse_raw_string(parser);
 
     return return_val;
 }
 
-BEN_value *parse_num(BEN_parser *parser)
+BEN_value *parse_num(Arena *arena, BEN_parser *parser)
 {
     int64_t num; 
     char *end;
-    BEN_value *return_val = malloc(sizeof(BEN_value));
-    if (!return_val)
-    {
-        printf("ERROR: does not have enough memory for parsing\n");
-        return NULL;
-    }
+    BEN_value *return_val = arena_push_struct(arena, BEN_value);
 
     consume(parser); //consume i
     num = strtol((char *) parser->buffer.data + parser->cursor, &end, 10);
@@ -131,38 +95,34 @@ BEN_value *parse_num(BEN_parser *parser)
     return return_val;
 }
 
-BEN_value *parse_list(BEN_parser *parser)
+BEN_value *parse_list(Arena *arena, BEN_parser *parser)
 {
-    BEN_value **tmp_items;
-    BEN_value *return_val = malloc(sizeof(BEN_value));
-    if (!return_val)
-    {
-        printf("ERROR: does not have enough memory for parsing\n");
-        return NULL;
-    }
+    BEN_list *tmp_list;
+    BEN_list *last = NULL;
+
+    BEN_value *val;
+    BEN_value *return_val = arena_push_struct(arena, BEN_value);
     return_val->type = BENCODE_LIST;
-    return_val->list.items = NULL;
-    return_val->list.count = 0;
+    return_val->list = NULL;
 
     consume(parser); //consume l
 
     while(peek(parser) != 'e')
     {
-        tmp_items = realloc(
-                return_val->list.items, 
-                sizeof(BEN_value *) * (return_val->list.count + 1)
-        );
-        if (!tmp_items)
-        {
-            printf("ERROR: does not have enough memory for parsing\n");
+        val = parse_value(arena, parser);
+        if (!val)
             return NULL;
-        }
-        return_val->list.items = tmp_items;
-        return_val->list.items[return_val->list.count] = parse_value(parser);
-        if (!return_val->list.items[return_val->list.count])
-            return NULL;
-        return_val->list.count++;
 
+        tmp_list = arena_push_struct(arena, BEN_list);
+        tmp_list->value = val;
+        tmp_list->next = NULL;
+
+        if (last)
+            last->next = tmp_list;
+        else
+            return_val->list = tmp_list;
+
+        last = tmp_list;
     }
 
     if (consume(parser) != 'e')
@@ -199,19 +159,20 @@ BEN_string parse_raw_string(BEN_parser *parser)
     return raw_str;
 }
 
-BEN_value *parse_value(BEN_parser *parser)
+BEN_value *parse_value(Arena *arena, BEN_parser *parser)
 {
     switch (peek(parser))
     {
-        case 'i': return parse_num(parser);
-        case 'l': return parse_list(parser);
-        case 'd': return parse_dict(parser);
+        case 'i': return parse_num(arena, parser);
+        case 'l': return parse_list(arena, parser);
+        case 'd': return parse_dict(arena, parser);
 
         case '0': case '1': case '2': case '3': case '4':
         case '5': case '6': case '7': case '8': case '9': 
-                  return parse_string(parser);
+                  return parse_string(arena, parser);
 
         default:      
+                  printf("ERROR: malformed .torrent file\n");
                   return NULL;    
     }
 }
@@ -281,7 +242,7 @@ bool BEN_string_equals(BEN_string *b_key, const char *key)
     return false;
 }
 
-BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
+BEN_value *get_BEN_value_by_key(const BEN_pair *pair, const char *key)
 {
     int i;
     for (i = 0; i < pairs->count; i++)
@@ -293,7 +254,7 @@ BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key)
 }
 
 
-TR_info *BEN_pairs_to_TR_info(const BEN_pairs *pairs)
+TR_info *BEN_pairs_to_TR_info(const BEN_pair *pair)
 {
     BEN_value *temp_b_value;
     TR_info *info = malloc(sizeof(TR_info));

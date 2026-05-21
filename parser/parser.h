@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../types/types.h"
+#include "../arena/arena.h"
 
 
 //parser init
-BEN_parser *init_BEN_parser(file_content_buffer *buffer);
-BEN_value *parse_file_content_buffer(BEN_parser *parser);
+BEN_parser *init_BEN_parser(Arena *arena, file_content_buffer *buffer);
 
 //parser helper funcs
 unsigned char peek(BEN_parser *parser);
@@ -16,12 +16,12 @@ void free_BEN_value(BEN_value *dict);
 BEN_string parse_raw_string(BEN_parser *parser);
 
 //parsing action
-BEN_value *parse_dict(BEN_parser *parser);
-BEN_value *parse_string(BEN_parser *parser);
-BEN_value *parse_num(BEN_parser *parser);
-BEN_value *parse_list(BEN_parser *parser);
+BEN_value *parse_dict(Arena *arena, BEN_parser *parser);
+BEN_value *parse_string(Arena *arena, BEN_parser *parser);
+BEN_value *parse_num(Arena *arena, BEN_parser *parser);
+BEN_value *parse_list(Arena *arena, BEN_parser *parser);
 
-BEN_value *parse_value(BEN_parser *parser);
+BEN_value *parse_value(Arena *arena, BEN_parser *parser);
 
 //SHA1 helper funcs
 void get_info_value_offset(BEN_parser *parser, int *begining, int *end);
@@ -29,16 +29,16 @@ void skip_value(BEN_parser *parser);
 void get_info_hash(BEN_parser *parser, unsigned char info_hash[20]);
 
 //parsing inside struct 
-TR_info *BEN_pairs_to_TR_info(const BEN_pairs *pairs);
+TR_info *BEN_pairs_to_TR_info(const BEN_pair *pairs);
 void fill_in_calculated_field_in_TR_info(TR_info *info);
 void free_TR_info(TR_info *info);
 
 //complex operations inside BEN_pairs_to_TR_info
-bool parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info);
-bool parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info);
+bool parse_BEN_info_to_TR_info(const BEN_pair *b_info, TR_info *info);
+bool parse_BEN_announce_to_TR_info(const BEN_pair *pairs, TR_info *info);
 
 //BEN to TR helper funcs
-BEN_value *get_BEN_value_by_key(const BEN_pairs *pairs, const char *key); 
+BEN_value *get_BEN_value_by_key(const BEN_pair *pairs, const char *key); 
 char *BEN_string_to_C_string(const BEN_string *b_string);
 void parse_BEN_pieces_to_TR_info(BEN_string *b_str, TR_info *info);
 bool BEN_string_equals(BEN_string *b_key, const char *key);

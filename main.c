@@ -4,7 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include "repl/repl.h"
@@ -14,14 +13,16 @@
 #include "init/init_session.h"
 #include "types/types.h"
 #include "utils/str_utils.h"
+#include "arena/arena.h"
 
 int main(void) 
 {
     char  line[MAX_CHARS];
     char *argv[MAX_ARGS];
-    CL_session *session = malloc(sizeof(CL_session));
+    Arena main_arena = arena_create(GB(1));
+    CL_session session = {0};
 
-    session = init_CL_session();
+    init_CL_session(&session, &main_arena);
 
     while (1) {
         printf("bbb=> ");
@@ -29,13 +30,12 @@ int main(void)
 
         if (!fgets(line, sizeof(line), stdin)) break; 
 
-        /* trim trailing newline */
         line[strcspn(line, "\n")] = '\0';
         if (line[0] == '\0') continue;                 
         if (strcmp(line, "exit") == 0) break;
 
         int argc = tokenize(line, argv, MAX_ARGS);
-        dispatch(session, argc, argv);
+        dispatch(&session, argc, argv);
     }
 
     puts("Bye!");

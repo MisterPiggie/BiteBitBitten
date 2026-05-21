@@ -41,29 +41,24 @@ void CMD_add(CL_session *session, int argc, char **argv)
         return;
     }
 
-    buffer = read_BEN_file(argv[1]);
+    Arena scratch_arena = arena_create(MB(2));
+
+    buffer = read_BEN_file(&scratch_arena, argv[1]);
     if (!buffer)
+    {
+        goto done;
         return;
+    }
     
-    parser = init_BEN_parser(buffer);
-    if (!parser)
+    parser = init_BEN_parser(&scratch_arena, buffer);
+
+    dict = parse_dict(&scratch_arena, parser);
     {
-        free(buffer->data);
-        free(buffer);
+        goto done;
         return;
     }
 
-    dict = parse_dict(parser);
-    if (!dict)
-    {
-        printf("dict failed\n");
-        free(parser);
-        free(buffer->data);
-        free(buffer);
-        return;
-    }
-
-    info = BEN_pairs_to_TR_info(&dict->dict);
+    info = BEN_pairs_to_TR_info(main_arena, &dict->dict);
     if (!info)
     {
         free(buffer->data);
@@ -103,6 +98,8 @@ void CMD_add(CL_session *session, int argc, char **argv)
         build_path(session->download_folder_path, session->torrents[session->torrents_count-1]->info->name);
     replace_spaces_with(session->torrents[session->torrents_count-1]->download_path, '_');
 
+done:
+    arena_destroy(&scratch_arena);
     return;
 }
 

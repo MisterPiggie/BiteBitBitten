@@ -12,29 +12,28 @@
 #include <netinet/in.h>
 
 
-CL_session *init_CL_session(void)
+void init_CL_session(CL_session *session, Arena *arena)
 {
-    const char *config_path = get_config_dir_path();
+    const char *config_path = get_config_dir_path(arena);
     const char *home_path = get_home_dir_path();
-    CL_session *session = malloc(sizeof(CL_session));
 
-    session->config_dir_path = build_path(config_path, "bbb");
-    session->config_file_path = build_path(session->config_dir_path, "config.pig");
-    session->resume_dir_path = build_path(session->config_dir_path, "resume");
-    session->torrent_dir_path = build_path(session->config_dir_path, "torrent");
-    session->download_folder_path = build_path(home_path, "bbb_download");
+    session->config_dir_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
+    session->config_file_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
+    session->resume_dir_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
+    session->torrent_dir_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
+    session->download_folder_path = arena_push_strf(arena, "%s/%s",home_path, "bbb_download");
 
     generate_peer_id(session->peer_id);
     
     session->udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (session->udp_socket == -1)
-        return session;
+        return;
     struct timeval tv = { .tv_sec = 3, .tv_usec = 0};
     setsockopt(session->udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    return session;
+    return;
 }
 
-char const *get_config_dir_path(void)
+const char *get_config_dir_path(Arena *arena)
 {
     static const char *config_path = NULL;
 
@@ -47,9 +46,7 @@ char const *get_config_dir_path(void)
 
     config_path = get_home_dir_path();
 
-    config_path = build_path(config_path, ".config");
-
-    return config_path;
+    return arena_push_strf(arena, "%s/%s", config_path, ".config");
 
 }
  
@@ -79,14 +76,6 @@ const char *get_home_dir_path(void)
     return home_path;
 }
 
-
-char *build_path(const char *base_path, const char *sub_path)
-{
-    size_t len = strlen(base_path) + strlen(sub_path) + 2;
-    char *out_path = malloc(len * sizeof(char));
-    snprintf(out_path, len, "%s/%s", base_path, sub_path);
-    return out_path;
-}
 
 TR_torrent *init_TR_torrent(TR_info *info)
 {
