@@ -102,6 +102,12 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
 
     torrent->downloaded = 0;
     torrent->uploaded = 0;
+    torrent->tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (torrent->tcp_socket == -1)
+    {
+        arena_destroy(&torrent_arena);
+        return NULL;
+    }
 
     torrent->tracker_count = torrent->info->trackers_count;
 

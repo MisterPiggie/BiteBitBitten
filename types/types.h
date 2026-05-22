@@ -143,6 +143,7 @@ typedef struct {
     int         active_tracker_idx;
     char        *download_path;
 
+    int         tcp_socket;
     uint64_t    downloaded;
     uint64_t    uploaded;
 } TR_torrent;
