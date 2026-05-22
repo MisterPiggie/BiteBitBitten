@@ -77,7 +77,7 @@ uint32_t get_random_u32(void)
 
  
 
-int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
+int tracker_string_to_NET_tracker(Arena *arena, char *url, NET_tracker *track)
 {
     char *schema_end;
     char *host_start;
@@ -88,46 +88,22 @@ int tracker_string_to_NET_tracker(char *url, NET_tracker *track)
     if (!schema_end)
         return -1;
 
-    track->schema = strndup(url, schema_end - url);
-    if (track->schema == NULL)
-    {
-        printf("ERROR: not enough memory for torrent struct\n");
-        return -1;
-    }
-
+    track->schema = arena_push_strn(arena, url, schema_end - url);
     host_start = schema_end + 3;
 
     colon = strchr(host_start, ':');
     if (!colon)
         return -1;
 
-    track->host = strndup(host_start, colon - host_start);
-    if (track->host == NULL)
-    {
-        printf("ERROR: not enough memory for torrent struct\n");
-        return -1;
-    }
+    track->host = arena_push_strn(arena, host_start, colon - host_start);
 
     track->port = atoi(colon + 1);
 
     path_start = strchr(colon + 1, '/');
-    track->path = path_start ? strdup(path_start) : strdup("/");
+    track->path = path_start ? arena_push_str(arena, path_start) : arena_push_str(arena, "/");
 
     track->reqs_count = 0;
 
     return 0;
 }
 
-void free_NET_trackers_from_TR_torrent(TR_torrent *torrent)
-{
-    int i;
-    for (i = 0; i < torrent->tracker_count ; i++)
-    {
-        free(torrent->tracks[i].host);
-        free(torrent->tracks[i].schema);
-        free(torrent->tracks[i].path);
-    }
-    free(torrent->tracks);
-
-    return;
-}

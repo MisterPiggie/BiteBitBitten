@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#define MAX_TORRENTS 128
 
 void init_CL_session(CL_session *session, Arena *arena)
 {
@@ -23,7 +24,12 @@ void init_CL_session(CL_session *session, Arena *arena)
     session->torrent_dir_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
     session->download_folder_path = arena_push_strf(arena, "%s/%s",home_path, "bbb_download");
 
+    session->torrents = arena_push_array(arena, TR_torrent* , MAX_TORRENTS);
+    session->torrents_count = 0;
+
     generate_peer_id(session->peer_id);
+
+    session->main_arena = arena;
     
     session->udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (session->udp_socket == -1)
@@ -77,36 +83,36 @@ const char *get_home_dir_path(void)
 }
 
 
-TR_torrent *init_TR_torrent(TR_info *info)
+TR_torrent *init_TR_torrent(BEN_pair *pair)
 {
     int i;
 
-    TR_torrent *torrent = malloc(sizeof(TR_torrent));
-    if (!torrent)
+    Arena torrent_arena = arena_create(MB(10));
+    TR_torrent *torrent = arena_push_struct(&torrent_arena, TR_torrent);
+    torrent->arena = torrent_arena;
+
+    torrent->info = arena_push_struct(&torrent_arena, TR_info);
+    torrent->info = BEN_pairs_to_TR_info(&torrent_arena, pair);
+    if (!torrent->info)
     {
-        printf("ERROR: not enough memory to init torrent\n");
+        arena_destroy(&torrent_arena);
         return NULL;
     }
+    fill_in_calculated_field_in_TR_info(torrent->info);
+
     torrent->downloaded = 0;
     torrent->uploaded = 0;
 
-    torrent->info = info;
-    torrent->tracker_count = info->trackers_length;
+    torrent->tracker_count = torrent->info->trackers_count;
 
-    torrent->tracks = malloc(sizeof(NET_tracker) * torrent->tracker_count);
-    if (torrent->tracks == NULL)
-    {
-        free(torrent);
-        printf("ERROR: not enough memory to init torrent\n");
-        return NULL;
-    }
+    torrent->tracks = arena_push_array(&torrent_arena, NET_tracker, torrent->tracker_count);
 
     for (i = 0; i < torrent->tracker_count; i++)
     {
-        if(tracker_string_to_NET_tracker(info->trackers[i].announce, &torrent->tracks[i]) != 0)
+        if(tracker_string_to_NET_tracker(&torrent_arena, torrent->info->trackers[i].announce, &torrent->tracks[i]) != 0)
         {
-            printf("ERROR: not enough memory to init torrent\n");
-            free_NET_trackers_from_TR_torrent(torrent);
+            printf("ERROR: malformed url\n");
+            arena_destroy(&torrent_arena);
             return NULL;
         }
         torrent->tracks[i].key = get_random_u32();
@@ -116,9 +122,3 @@ TR_torrent *init_TR_torrent(TR_info *info)
     
 }
 
-void free_TR_torrent(TR_torrent *torrent)
-{
-    free_NET_trackers_from_TR_torrent(torrent);
-    free_TR_info(torrent->info);
-    free(torrent);
-}

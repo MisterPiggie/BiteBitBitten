@@ -50,6 +50,8 @@ void SHA1_hash(const unsigned char *message, size_t length, uint8_t hash[20])
         hash[i*4 + 3] = H[i];
     }
 
+    free(padded_buf);
+
 }
 
 void SHA1_compress_blocks(uint8_t *padded_buf, uint32_t *A, uint32_t *B, uint32_t *C, uint32_t *D, uint32_t *E)

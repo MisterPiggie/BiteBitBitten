@@ -32,8 +32,7 @@ uint32_t get_random_u32(void);
 int tracker_connect(int sock, struct sockaddr_in *trackerr, uint32_t *tid_out);
 
 
-int tracker_string_to_NET_tracker(char *str, NET_tracker *track);
-void free_NET_trackers_from_TR_torrent(TR_torrent *torrent);
+int tracker_string_to_NET_tracker(Arena *arena, char *url, NET_tracker *track);
 
 int UDP_send_connect_req(int sock, NET_tracker *track);
 int UDP_sendto(int sock, NET_tracker *track, const uint8_t *buf, size_t len);

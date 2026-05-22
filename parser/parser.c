@@ -87,7 +87,6 @@ BEN_value *parse_num(Arena *arena, BEN_parser *parser)
 
     if (consume(parser) != 'e')
     {
-        free(return_val);
         printf("ERROR: malformed torrent file\n");
         return NULL;
     }
@@ -228,12 +227,12 @@ void get_info_hash(BEN_parser *parser, unsigned char info_hash[20])
     SHA1_hash(parser->buffer.data + begining, end - begining, info_hash);
 }
 
-char *BEN_string_to_C_string(const BEN_string *b_string)
+char *BEN_string_to_C_string(Arena *arena, const BEN_string *b_string)
 {
-    return strndup((char *)b_string->data, b_string->length);
+    return arena_push_strn(arena, (char *) b_string->data, b_string->length);
 }
 
-bool BEN_string_equals(BEN_string *b_key, const char *key)
+bool BEN_string_equals(const BEN_string *b_key, const char *key)
 {
     if (b_key->length != strlen(key))
             return false;
@@ -244,48 +243,47 @@ bool BEN_string_equals(BEN_string *b_key, const char *key)
 
 BEN_value *get_BEN_value_by_key(const BEN_pair *pair, const char *key)
 {
-    int i;
-    for (i = 0; i < pairs->count; i++)
+    const BEN_pair *tmp_pair = pair;
+
+    while (tmp_pair != NULL)
     {
-        if (BEN_string_equals(&pairs->BEN_pairs[i].key, key))
-            return pairs->BEN_pairs[i].value;
+        if (BEN_string_equals(&tmp_pair->key, key))
+            return tmp_pair->value;
+        tmp_pair = tmp_pair->next;
     }
+
     return NULL;
 }
 
 
-TR_info *BEN_pairs_to_TR_info(const BEN_pair *pair)
+TR_info *BEN_pairs_to_TR_info(Arena *torrent_arena, const BEN_pair *pair)
 {
     BEN_value *temp_b_value;
-    TR_info *info = malloc(sizeof(TR_info));
-    if (!info)
-    {
-        printf("ERROR: not enough memory to create info struct\n");
-        return NULL;
-    }
 
-    if (parse_BEN_announce_to_TR_info(pairs, info) == false)
+    TR_info *info = arena_push_struct(torrent_arena, TR_info);
+     
+    if (parse_BEN_announce_to_TR_info(torrent_arena, pair, info) == false)
     {
-        free_TR_info(info);
+        arena_destroy(torrent_arena);
         return NULL;
     }
-    temp_b_value = get_BEN_value_by_key(pairs, "info");
+    temp_b_value = get_BEN_value_by_key(pair, "info");
     if(temp_b_value == NULL)
     {
         printf("ERROR: torrent file doesnt have essential fields");
-        free_TR_info(info);
+        arena_destroy(torrent_arena);
         return NULL;
     }
 
-    if (parse_BEN_info_to_TR_info(&temp_b_value->dict, info) == false)
+    if (parse_BEN_info_to_TR_info(torrent_arena, temp_b_value->dict, info) == false)
     {
-        free_TR_info(info);
+        arena_destroy(torrent_arena);
         return NULL;
     }
 
-    if ((temp_b_value = get_BEN_value_by_key(pairs, "created by")))
+    if ((temp_b_value = get_BEN_value_by_key(pair, "created by")))
     {
-        info->created_by= BEN_string_to_C_string(&temp_b_value->string);
+        info->created_by= BEN_string_to_C_string(torrent_arena, &temp_b_value->string);
         if (info->created_by == NULL)
         {
             printf("ERROR: not enough memory to create info struct\n");
@@ -293,9 +291,9 @@ TR_info *BEN_pairs_to_TR_info(const BEN_pair *pair)
         }
     }
 
-    if ((temp_b_value = get_BEN_value_by_key(pairs, "comment")))
+    if ((temp_b_value = get_BEN_value_by_key(pair, "comment")))
     {
-        info->comment = BEN_string_to_C_string(&temp_b_value->string);
+        info->comment = BEN_string_to_C_string(torrent_arena, &temp_b_value->string);
         if (info->comment == NULL)
         {
             printf("ERROR: not enough memory to create info struct\n");
@@ -303,15 +301,16 @@ TR_info *BEN_pairs_to_TR_info(const BEN_pair *pair)
         }
     }
 
-    if ((temp_b_value = get_BEN_value_by_key(pairs, "creation date")))
+    if ((temp_b_value = get_BEN_value_by_key(pair, "creation date")))
     {
         info->creation_date = temp_b_value->number;
     }
+
     return info;
 }
 
 
-bool parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info)
+bool parse_BEN_info_to_TR_info(Arena *arena, const BEN_pair *b_info, TR_info *info)
 {
     BEN_value *temp_b_value;
     temp_b_value = get_BEN_value_by_key(b_info, "name");
@@ -320,12 +319,7 @@ bool parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info)
         printf("ERROR: torrent file doesnt have essential fields");
         return false;
     }
-    info->name = BEN_string_to_C_string(&temp_b_value->string);
-    if (info->name == NULL)
-    {
-        printf("ERROR: not enough memory for info struct\n");
-        return false;
-    }
+    info->name = BEN_string_to_C_string(arena, &temp_b_value->string);
 
     temp_b_value = get_BEN_value_by_key(b_info, "piece length");
     if(temp_b_value == NULL)
@@ -341,29 +335,19 @@ bool parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info)
         printf("ERROR: torrent file doesnt have essential fields");
         return false;
     }
-    parse_BEN_pieces_to_TR_info(&temp_b_value->string, info);
-    if(temp_b_value->string.length != info->pieces_string_length)
-    {
-        printf("ERROR: couldnt parse pieces\n");
-        return false;
-    }
+    parse_BEN_pieces_to_TR_info(arena, &temp_b_value->string, info);
 
     temp_b_value = get_BEN_value_by_key(b_info, "files");
     if (temp_b_value != NULL)
     {
-        parse_BEN_multifile_list_to_TR_info(&temp_b_value->list, info);
+        parse_BEN_multifile_list_to_TR_info(arena, temp_b_value->list, info);
         if (info->files == NULL)
             return false;
 
         return true;
     } else if ((temp_b_value = get_BEN_value_by_key(b_info, "length")) != NULL)
     {
-        info->files = malloc(sizeof(TR_file));
-        if (info->files == NULL)
-        {
-            printf("ERROR: not enough memory for info struct\n");
-            return false;
-        }
+        info->files = arena_push_struct(arena, TR_file);
         info->files->length = temp_b_value->number;
         info->files->path = info->name;
         return true;
@@ -374,59 +358,56 @@ bool parse_BEN_info_to_TR_info(const BEN_pairs *b_info, TR_info *info)
     }
 }
 
-bool parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
+bool parse_BEN_announce_to_TR_info(Arena *arena, const BEN_pair *pair, TR_info *info)
 {
     BEN_value *announce_list;
-    char *tmp_str;
-    int i, j, temp_trackers_length = 0;
+    BEN_list *tier_list, *track_list;
+    int idx = 0, tier = 0, trackers_count = 0;
 
-    info->trackers_length = 0;
+    info->trackers_count = 0;
 
-    if ((announce_list = get_BEN_value_by_key(pairs, "announce-list")))
+    
+
+    if ((announce_list = get_BEN_value_by_key(pair, "announce-list")))
     {
-        for (i = 0; i < announce_list->list.count; i++)
+        tier_list = announce_list->list;
+        while (tier_list)
         {
-            info->trackers_length += announce_list->list.items[i]->list.count;
+            track_list = tier_list->value->list;
+            while(track_list)
+            {
+                trackers_count++;
+                track_list = track_list->next;
+            }
+            tier_list = tier_list->next;
         }
 
-        info->trackers = malloc(sizeof(TR_tracker) * info->trackers_length);
-        if (info->trackers == NULL)
-        {
-            printf("ERROR: not enough memory for info struct\n");
-            return false;
-        }
-        for (i = 0; i < announce_list->list.count; i++)
-        {
+        info->trackers = arena_push_array(arena, TR_tracker, trackers_count);
+        info->trackers_count = trackers_count;
 
-            if (announce_list->list.items[i]->type == BENCODE_LIST)
-                for (j = 0; j < announce_list->list.items[i]->list.count; j++)
-                {
-                    tmp_str = BEN_string_to_C_string(
-                                &announce_list->list.items[i]->list.items[j]->string
-                                );
-                    if (tmp_str == NULL)
-                    {
-                        printf("ERROR: not enough memory for info struct\n");
-                        return false;
-                    }
-                    info->trackers[temp_trackers_length].announce = tmp_str;
-                    info->trackers[temp_trackers_length].tier = i;
-                    temp_trackers_length++;
-                }
+        tier_list = announce_list->list;
+        while (tier_list)
+        {
+            track_list = tier_list->value->list;
+            while(track_list)
+            {
+                info->trackers[idx].announce = BEN_string_to_C_string(arena, &track_list->value->string);
+                info->trackers[idx].tier = tier;
+                idx++;
+                track_list = track_list->next;
+            }
+            tier++;
+            tier_list = tier_list->next;
         }
         return true;
-    } else if ((announce_list = get_BEN_value_by_key(pairs, "announce")))
+    } else if ((announce_list = get_BEN_value_by_key(pair, "announce")))
     {   
-        info->trackers = malloc(sizeof(TR_tracker));
-        if (info->trackers == NULL)
-        {
-            printf("ERROR: not enough memory for info struct\n");
-            return false;
-        }
-        info->trackers_length++;
-        info->trackers[temp_trackers_length].announce = BEN_string_to_C_string(&announce_list->string);
-        info->trackers[temp_trackers_length].tier = 0;
-        temp_trackers_length++;
+        info->trackers = arena_push_struct(arena, TR_tracker);
+        info->trackers_count++;
+        info->trackers[0].announce = BEN_string_to_C_string(arena, &announce_list->string);
+        info->trackers[0].tier = 0;
+        trackers_count++;
+        info->trackers_count = trackers_count;
         return true;
     } else 
     {
@@ -436,33 +417,38 @@ bool parse_BEN_announce_to_TR_info(const BEN_pairs *pairs, TR_info *info)
 }
 
 
-void parse_BEN_pieces_to_TR_info(BEN_string *b_str, TR_info *info)
+void parse_BEN_pieces_to_TR_info(Arena *arena, BEN_string *b_str, TR_info *info)
 {
-    info->pieces = malloc(b_str->length * sizeof(uint8_t));
-    if (!info->pieces)
-        return;
+    info->pieces = arena_push_array(arena, uint8_t, b_str->length);
     memcpy(info->pieces, b_str->data, b_str->length);
 
     info->pieces_string_length = b_str->length;
     return;
 }
 
-void parse_BEN_multifile_list_to_TR_info(BEN_list *b_list, TR_info *info)
+void parse_BEN_multifile_list_to_TR_info(Arena *arena, BEN_list *b_list, TR_info *info)
 {
-    int i;
+    int i = 0, file_count = 0;
     BEN_value *temp_val;
+    BEN_list *file_list = b_list;
 
-    info->files_count = b_list->count;
-    info->files = malloc(sizeof(TR_info) * info->files_count);
-    if (info->files == NULL)
+    while(file_list)
     {
-        printf("ERROR: not enough memory for files field\n");
-        return;
+        file_count++;
+        file_list = file_list->next;
     }
 
-    for (i = 0; i<b_list->count; i++)
+    info->files = arena_push_array(arena, TR_file,  file_count);
+    info->files_count = file_count;
+
+
+
+
+
+    file_list = b_list;
+    while (file_list)
     {
-        temp_val = get_BEN_value_by_key(&b_list->items[i]->dict, "length");
+        temp_val = get_BEN_value_by_key(file_list->value->dict, "length");
         if (temp_val == NULL)
         {
             info->files = NULL;
@@ -471,46 +457,42 @@ void parse_BEN_multifile_list_to_TR_info(BEN_list *b_list, TR_info *info)
         }
         info->files[i].length = temp_val->number;
 
-        temp_val = get_BEN_value_by_key(&b_list->items[i]->dict, "path");
+        temp_val = get_BEN_value_by_key(file_list->value->dict, "path");
         if (temp_val == NULL)
         {
             info->files = NULL;
             printf("ERROR: missing essential fields\n");
             return;
         }
-        info->files[i].path = parse_BEN_list_to_path_C_string(&temp_val->list);
-        if (info->files[i].path == NULL)
-        {
-            info->files = NULL;
-            printf("ERROR: not enough memory for files field\n");
-            return;
-        }
+        info->files[i].path = parse_BEN_list_to_path_C_string(arena, temp_val->list);
+        i++;
+        file_list = file_list->next;
     }
 }
 
-char *parse_BEN_list_to_path_C_string(BEN_list *b_list)
+char *parse_BEN_list_to_path_C_string(Arena *arena, BEN_list *b_list)
 {
-    int path_length = 0, i = 0;
+    int path_length = 0, count = 0;
     char *path_str;
-    char *filename;
-    for (i = 0; i < b_list->count; i++)
-    {
-        path_length += b_list->items[i]->string.length;
-    }
-    path_length += b_list->count + 1; //for "/" symbol and NULL terminator 
-    
-    path_str = malloc(sizeof(char) * path_length);
-    if (path_str == NULL)
-        return NULL;
 
+    BEN_list *path_list = b_list;
+    while (path_list)
+    {
+        path_length += path_list->value->string.length;
+        path_list = path_list->next;
+        count++;
+    }
+    path_length += count + 1; //for "/" symbol and NULL terminator 
+    
+    path_str = arena_push_array(arena, char, path_length);
     path_str[0] = '\0';
 
-    for (i = 0; i < b_list->count; i++)
+    path_list = b_list;
+    while (path_list)
     {
-        filename = BEN_string_to_C_string(&b_list->items[i]->string);
         strcat(path_str, "/");
-        strcat(path_str, filename); //NEED TO CHANGE
-        free(filename);
+        strncat(path_str, (char *) path_list->value->string.data, path_list->value->string.length);
+        path_list = path_list->next;
     }
 
     return path_str;
@@ -535,56 +517,4 @@ void fill_in_calculated_field_in_TR_info(TR_info *info)
     info->total_size = total_size;
 }
 
-void free_BEN_value(BEN_value *val)
-{
-    int i;
-    if (!val)
-        return;
 
-    switch (val->type)
-    {
-        case BENCODE_NUMBER:
-            break;
-        case BENCODE_STRING:
-            break;
-        case BENCODE_LIST:
-            for (i = 0; i < val->list.count; i++)
-                free_BEN_value(val->list.items[i]);
-            free(val->list.items);
-            break;
-        case BENCODE_DICT:
-            for (i = 0; i < val->dict.count; i++)
-                free_BEN_value(val->dict.BEN_pairs[i].value);
-            free(val->dict.BEN_pairs);
-            break;
-    }
-
-    free(val);
-
-    return;
-}
-
-void free_TR_info(TR_info *info)
-{
-    int i;
-
-    printf("freeing comment\n");    free(info->comment);
-    printf("freeing created_by\n"); free(info->created_by);
-    printf("freeing name\n");       free(info->name);
-    printf("freeing pieces\n");     free(info->pieces);
-
-    for (i = 0; i < info->trackers_length; i++)
-    {
-        printf("freeing tracker %d announce\n", i);
-        free(info->trackers[i].announce);
-    }
-    printf("freeing trackers array\n"); free(info->trackers);
-
-    for (i = 0; i < info->files_count; i++)
-    {
-        printf("freeing file %d path\n", i);
-        free(info->files[i].path);
-    }
-    printf("freeing files array\n"); free(info->files);
-    printf("freeing info\n");        free(info);
-}

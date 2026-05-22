@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "../arena/arena.h"
 
 
 //FILE structs
@@ -42,10 +43,11 @@ typedef struct {
     int cursor;
 } BEN_parser;
 
-typedef struct {
-    BEN_value **items;
-    int count;
-} BEN_list;
+typedef struct BEN_list BEN_list;
+struct BEN_list{
+    BEN_value *value;
+    BEN_list *next;
+};
 
 
 struct BEN_value {
@@ -53,8 +55,8 @@ struct BEN_value {
     union {
         int64_t number;
         BEN_string string;
-        BEN_list list;
-        BEN_pair dict;
+        BEN_list *list;
+        BEN_pair *dict;
     };
 };
 
@@ -90,7 +92,7 @@ typedef struct {
     uint64_t total_size;
 
     TR_tracker *trackers;
-    int trackers_length;
+    int trackers_count;
 
     TR_file *files;
     int files_count;
@@ -133,6 +135,8 @@ typedef struct {
 
 
 typedef struct {
+    Arena       arena;
+
     TR_info     *info;
     NET_tracker *tracks;
     int         tracker_count;
@@ -144,6 +148,7 @@ typedef struct {
 } TR_torrent;
 
 typedef struct {
+    
     char *download_folder_path;
     char *resume_dir_path;
     char *torrent_dir_path;
@@ -154,6 +159,8 @@ typedef struct {
     int          udp_socket;
     TR_torrent   **torrents;
     int          torrents_count;
+
+    Arena        *main_arena;
 
 } CL_session;
 

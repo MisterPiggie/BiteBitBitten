@@ -32,7 +32,15 @@ int main(void)
 
         line[strcspn(line, "\n")] = '\0';
         if (line[0] == '\0') continue;                 
-        if (strcmp(line, "exit") == 0) break;
+        if (strcmp(line, "exit") == 0) 
+        {
+            for (int i = 0; i < session.torrents_count; i++)
+            {
+                arena_destroy(&session.torrents[i]->arena);
+            }
+            arena_destroy(&main_arena);
+            break;
+        }
 
         int argc = tokenize(line, argv, MAX_ARGS);
         dispatch(&session, argc, argv);

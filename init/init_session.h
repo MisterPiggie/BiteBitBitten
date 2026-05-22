@@ -8,5 +8,4 @@ void init_CL_session(CL_session *session, Arena *arena);
 //Helper init funcs 
 const char *get_home_dir_path(void);
 
-TR_torrent *init_TR_torrent(TR_info *info);
-void free_TR_torrent(TR_torrent *torrent);
+TR_torrent *init_TR_torrent(BEN_pair *pair);

@@ -30,8 +30,7 @@ void CMD_add(CL_session *session, int argc, char **argv)
     file_content_buffer *buffer;
     BEN_parser          *parser;
     BEN_value           *dict;
-    TR_info             *info;
-    TR_torrent          **tmp_torrent;
+    TR_torrent          *tmp_torrent;
 
 
 
@@ -41,66 +40,40 @@ void CMD_add(CL_session *session, int argc, char **argv)
         return;
     }
 
-    Arena scratch_arena = arena_create(MB(2));
+    Arena scratch_arena = arena_create(MB(10));
 
     buffer = read_BEN_file(&scratch_arena, argv[1]);
     if (!buffer)
     {
-        goto done;
+        arena_destroy(&scratch_arena);
         return;
     }
     
     parser = init_BEN_parser(&scratch_arena, buffer);
 
     dict = parse_dict(&scratch_arena, parser);
+    if (!dict)
     {
-        goto done;
+        arena_destroy(&scratch_arena);
         return;
     }
 
-    info = BEN_pairs_to_TR_info(main_arena, &dict->dict);
-    if (!info)
-    {
-        free(buffer->data);
-        free(buffer);
-        free(parser);
-        free_BEN_value(dict);
-        return;
-    }
-
-
-    fill_in_calculated_field_in_TR_info(info);
-    get_info_hash(parser, info->info_hash);
-
-    free(buffer->data);
-    free(buffer);
-    free_BEN_value(dict);
-    free(parser);
-    
-    tmp_torrent = realloc(session->torrents, ++session->torrents_count * sizeof(TR_torrent));
+    tmp_torrent = init_TR_torrent(dict->dict);
     if (!tmp_torrent)
     {
-        printf("ERROR: not enough memory to add another torrent\n");
-        --session->torrents_count;
+        arena_destroy(&scratch_arena);
         return;
     }
-    session->torrents = tmp_torrent;
-    session->torrents[session->torrents_count-1] = init_TR_torrent(info);
-    if (session->torrents[session->torrents_count-1] == NULL)
-    {
-        printf("ERROR: not enough memory to add another torrent\n");
-        --session->torrents_count;
-        return;
-    }
-    printf("Torrent added successfully\n");
+
+    get_info_hash(parser, tmp_torrent->info->info_hash);
+
+    session->torrents[session->torrents_count++] = tmp_torrent;
 
     session->torrents[session->torrents_count-1]->download_path =
-        build_path(session->download_folder_path, session->torrents[session->torrents_count-1]->info->name);
+        arena_push_strf(&tmp_torrent->arena, "%s/%s", session->download_folder_path, session->torrents[session->torrents_count-1]->info->name);
     replace_spaces_with(session->torrents[session->torrents_count-1]->download_path, '_');
-
-done:
     arena_destroy(&scratch_arena);
-    return;
+
 }
 
 void CMD_print(CL_session *session, int argc, char **argv)
@@ -151,7 +124,7 @@ void CMD_print(CL_session *session, int argc, char **argv)
     }
 
     printf("\tTrackers:\n");
-    for (i = 0; i < torrent->info->trackers_length; i++)
+    for (i = 0; i < torrent->info->trackers_count; i++)
         printf("\t\t%s\n", torrent->info->trackers[i].announce);
     printf("\tHash info:");
     for(int j = 0; j < 20; j++) {
@@ -165,11 +138,10 @@ void CMD_print(CL_session *session, int argc, char **argv)
 void CMD_delete(CL_session *session, int argc, char **argv)
 {
     int id;
-    TR_torrent *torrent;
 
     if (argc != 2)
     {
-        printf("Usage: print <id>\n");
+        printf("Usage: delete <id>\n");
         return;
     }
 
@@ -187,9 +159,8 @@ void CMD_delete(CL_session *session, int argc, char **argv)
         return;
     }    
 
-    torrent = session->torrents[id];
-
-    free_TR_torrent(torrent);
+    arena_destroy(&session->torrents[id]->arena);
+    session->torrents[id] = session->torrents[session->torrents_count - 1];
     session->torrents_count--;
 }
 
