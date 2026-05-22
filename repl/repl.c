@@ -66,6 +66,13 @@ void CMD_add(CL_session *session, int argc, char **argv)
     }
 
     get_info_hash(parser, tmp_torrent->info->info_hash);
+    if (is_duplicate_torrent(tmp_torrent->info->info_hash, session))
+    {
+        printf("Torrent is already added\n");
+        arena_destroy(&tmp_torrent->arena);
+        arena_destroy(&scratch_arena);
+        return;
+    }
 
     session->torrents[session->torrents_count++] = tmp_torrent;
 
@@ -220,4 +227,15 @@ int id_from_arg(const char *str, int *out)
 
     *out = (int)val;
     return 0;
+}
+
+bool is_duplicate_torrent(uint8_t hash[20], CL_session *session)
+{
+    int i;
+    for (i = 0; i < session->torrents_count; i++)
+    {
+        if (memcmp(hash, session->torrents[i]->info->info_hash, 20) == 0)
+            return true;
+    }
+    return false;
 }

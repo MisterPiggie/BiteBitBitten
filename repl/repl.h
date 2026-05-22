@@ -1,4 +1,5 @@
 #include "../types/types.h"
+#include <stdbool.h>
 
 #define MAX_CHARS 512
 #define MAX_ARGS 16
@@ -12,6 +13,8 @@ void CMD_list(CL_session *session, int argc, char **argv);
 // void CMD_help(CL_session *session, int argc, char **argv);
 
 void dispatch(CL_session *seesion, int argc, char *argv[]);
+
+bool is_duplicate_torrent(uint8_t hash[20], CL_session *session);
 
 
 typedef void (*CMD_fn)(CL_session *session, int argc, char **argv);
