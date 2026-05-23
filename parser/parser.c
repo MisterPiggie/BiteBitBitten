@@ -531,7 +531,7 @@ void fill_in_calculated_field_in_TR_info(TR_info *info)
 bool sanitize_file_BEN_string(BEN_string *path)
 {
     int i, start_pos = 0, end_pos = path->length;
-    if ((path->data[0] == '.' && path->length == 1) || path->length == 0)
+    if ( path->length == 0 ||  (path->data[0] == '.' && path->length ==1))
         return false;
 
     for (i = 0; i < path->length; i++)
