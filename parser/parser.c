@@ -9,6 +9,12 @@
 #include <time.h>
 #include "../arena/arena.h"
 
+bool reserved_table[256] = {
+    ['<'] = true, ['>'] = true, [':'] = true, 
+    ['"'] = true, ['/'] = true, ['\\'] = true, 
+    ['|'] = true, ['?'] = true, ['*'] = true
+}
+
 
 BEN_parser *init_BEN_parser(Arena *arena, file_content_buffer *buffer)
 {
@@ -19,6 +25,11 @@ BEN_parser *init_BEN_parser(Arena *arena, file_content_buffer *buffer)
     return parser;
 }
 
+void init_reserved_table(void)
+{
+    for (int i = 0; i < 32; i++)
+        reserved_table[i] = true;
+}
 
 
 BEN_value *parse_dict(Arena *arena, BEN_parser *parser)
