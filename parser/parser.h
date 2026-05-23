@@ -8,6 +8,7 @@
 
 //parser init
 BEN_parser *init_BEN_parser(Arena *arena, file_content_buffer *buffer);
+void init_reserved_table(void);
 
 //parser helper funcs
 unsigned char peek(BEN_parser *parser);
