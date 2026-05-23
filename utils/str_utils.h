@@ -6,3 +6,4 @@ void replace_bad_chars_with(char *str, char replacement);
 void truncate_filename(char *str);
 
 int is_bad_char(char ch);
+int contains_suffix(char *str, char *suffix);
