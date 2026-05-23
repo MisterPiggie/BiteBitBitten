@@ -79,3 +79,20 @@ void truncate_filename(char *str)
     if (strlen(str) > 255)
         str[255] = '\0';
 }
+
+int contains_suffix(char *str, char *suffix)
+{
+    int i;
+    int str_len = strlen(str),
+        suffix_len = strlen(suffix);
+    if (str_len < suffix_len)
+        return 0;
+
+    for (i = 0; i < suffix_len; i++)
+    {
+        if (suffix[suffix_len - 1 - i] !=  str[str_len - 1 - i]
+            return 0;
+    }
+
+    return 1;
+}
