@@ -10,7 +10,7 @@
 
 file_content_buffer *read_BEN_file(Arena *arena, char *file_path)
 {
-    if (!contains_sufix(file_path, ".torrent"))
+    if (!contains_suffix(file_path, ".torrent"))
     {
         printf("ERROR: file provided is not torrent\n");
         return NULL;
