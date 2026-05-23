@@ -193,10 +193,6 @@ void CMD_list(CL_session *session, int argc, char **argv)
     }
     return;
 }
-// void CMD_connect(CL_session *session, int argc, char **argv)
-// {
-//     return;
-// }
 // void CMD_help(CL_session *session, int argc, char **argv)
 // {
 //     return;
