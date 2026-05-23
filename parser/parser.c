@@ -528,4 +528,27 @@ void fill_in_calculated_field_in_TR_info(TR_info *info)
     info->total_size = total_size;
 }
 
+bool sanitize_file_BEN_string(BEN_string *path)
+{
+    int i, start_pos = 0, end_pos = path->length;
+    if ((path->data[0] == '.' && path->length == 1) || path->length == 0)
+        return false;
 
+    for (i = 0; i < path->length; i++)
+        if (reserved_table[(unsigned char)path->data[i]])
+        path->data[i] = '_';
+
+    while (start_pos < path->length && path->data[start_pos] == ' ')
+    start_pos++;
+
+    while (end_pos > start_pos && (path->data[end_pos - 1] == ' ' || path->data[end_pos - 1] == '.'))
+    end_pos--;
+
+    if (end_pos == start_pos)
+       return false;
+   path->length = end_pos;
+   path->data += start_pos; 
+   path->length -= start_pos;
+   return true;
+
+}
