@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "../arena/arena.h"
-#include "../str_utils/str_utils.h"
+#include "../utils/str_utils.h"
 
 file_content_buffer *read_BEN_file(Arena *arena, char *file_path)
 {
