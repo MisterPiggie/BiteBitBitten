@@ -193,10 +193,11 @@ void CMD_list(CL_session *session, int argc, char **argv)
     }
     return;
 }
-// void CMD_help(CL_session *session, int argc, char **argv)
-// {
-//     return;
-// }
+void CMD_help(CL_session *session, int argc, char **argv)
+{
+    printf("ByteBitBitten Torrent client commands:\n\tadd <filepath to .torrent file> - adding torrent to download\n\tdelete <id> - delete torrent with entered id\n\tlist - list all added torrents with id\n\tprint <id> - print extended information about torrent with entered id\n\thelp - see this message again");
+    return;
+}
 
 void dispatch(CL_session *seesion, int argc, char *argv[]) 
 {
