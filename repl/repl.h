@@ -9,7 +9,6 @@ void CMD_add(CL_session *session, int argc, char **argv);
 void CMD_print(CL_session *session, int argc, char **argv);
 void CMD_delete(CL_session *session, int argc, char **argv);
 void CMD_list(CL_session *session, int argc, char **argv);
-// void CMD_connect(CL_session *session, int argc, char **argv);
 // void CMD_help(CL_session *session, int argc, char **argv);
 
 void dispatch(CL_session *seesion, int argc, char *argv[]);
@@ -30,7 +29,6 @@ static const CMD_command CMD_commands[] =
     {"print", CMD_print},
     {"delete", CMD_delete},
     {"list", CMD_list},
-    // {"connect", CMD_connect},
     // {"help", CMD_help},
 };
 
