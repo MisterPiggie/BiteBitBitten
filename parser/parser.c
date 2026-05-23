@@ -476,6 +476,11 @@ void parse_BEN_multifile_list_to_TR_info(Arena *arena, BEN_list *b_list, TR_info
             return;
         }
         info->files[i].path = parse_BEN_list_to_path_C_string(arena, temp_val->list);
+        if (info->files[i].path == NULL)
+        {
+            info->files = NULL;
+            return;
+        }
         i++;
         file_list = file_list->next;
     }
@@ -489,6 +494,11 @@ char *parse_BEN_list_to_path_C_string(Arena *arena, BEN_list *b_list)
     BEN_list *path_list = b_list;
     while (path_list)
     {
+        if (!sanitize_file_BEN_string(&path_list->value->string))
+        {
+            printf("ERROR: malicious filepath\");
+            return NULL;
+        }
         path_length += path_list->value->string.length;
         path_list = path_list->next;
         count++;
