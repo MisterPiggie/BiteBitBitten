@@ -6,9 +6,16 @@
 #include <string.h>
 #include <sys/stat.h>
 #include "../arena/arena.h"
+#include "../str_utils/str_utils.h"
 
 file_content_buffer *read_BEN_file(Arena *arena, char *file_path)
 {
+    if (!contains_sufix(file_path, ".torrent"))
+    {
+        printf("ERROR: file provided is not torrent\n");
+        return NULL;
+    }
+
     FILE *fp;
     size_t bytes_read;
     file_content_buffer *buffer = arena_push_struct(arena, file_content_buffer);
