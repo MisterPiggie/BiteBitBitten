@@ -490,6 +490,7 @@ char *parse_BEN_list_to_path_C_string(Arena *arena, BEN_list *b_list)
 {
     int path_length = 0, count = 0;
     char *path_str;
+    char *cursor;
 
     BEN_list *path_list = b_list;
     while (path_list)
@@ -507,12 +508,13 @@ char *parse_BEN_list_to_path_C_string(Arena *arena, BEN_list *b_list)
     
     path_str = arena_push_array(arena, char, path_length);
     path_str[0] = '\0';
-
+    cursor = path_str;
     path_list = b_list;
     while (path_list)
     {
-        strcat(path_str, "/");
-        strncat(path_str, (char *) path_list->value->string.data, path_list->value->string.length);
+        *cursor++ = '/';
+        memcpy(cursor, (char *) path_list->value->string.data, path_list->value->string.length);
+        cursor += path_list->value->string.length;
         path_list = path_list->next;
     }
 
