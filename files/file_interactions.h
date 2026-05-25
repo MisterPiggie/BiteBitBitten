@@ -9,4 +9,4 @@ bool save_state_in_file(BEN_value *value);
 
 bool make_dir(char *path, int permissions);
 bool make_dir_recursive(char *path, int permissions);
-bool TR_file_make_and_allocate(TR_file *file, int permissions);
+bool allocate_file(char *download_path, char *file_path, uint64_t length, int permissions);
