@@ -104,7 +104,7 @@ bool make_dir_recursive(char *path, int permissions)
     return ok;
 }
 
-bool allocate_file(char *download_path, char *file_path, uint64_t length, int permissions)
+bool allocate_file(char *download_path, char *file_path, uint64_t length)
 {
     char buf[4096];
     snprintf(buf, sizeof(buf), "%s%s", download_path, file_path);
@@ -113,7 +113,7 @@ bool allocate_file(char *download_path, char *file_path, uint64_t length, int pe
     if (last_slash)
     {
         *last_slash = '\0';
-        if (!make_dir_recursive(buf, permissions))
+        if (!make_dir_recursive(buf, 0755))
         {
             printf("ERROR: couldnt make folders for torrent\n");
             return false;
@@ -122,7 +122,7 @@ bool allocate_file(char *download_path, char *file_path, uint64_t length, int pe
     }
 
 
-    int fd = open(buf, O_CREAT | O_WRONLY, permissions);
+    int fd = open(buf, O_CREAT | O_WRONLY, 0644);
     if (fd == -1)
     {
         printf("ERROR: couldnt make file\n");
