@@ -89,6 +89,11 @@ arena_destroy(&scratch_arena);
         }
     }
     arena_destroy(&scratch_arena);
+    if (!copy_torrent_file(argv[1], session->torrent_folder_path))
+    {
+        printf("ERROR: couldnt save torrent file after parsing\n");
+        return;
+    }
 
 }
 
