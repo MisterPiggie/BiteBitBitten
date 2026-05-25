@@ -104,35 +104,37 @@ bool make_dir_recursive(char *path, int permissions)
     return ok;
 }
 
-bool TR_file_make_and_allocate(TR_file *file, int permissions)
+bool allocate_file(char *download_path, char *file_path, uint64_t length, int permissions)
 {
-    char *last_slash = strchr(file->path, '/');
+    char buf[4096];
+    snprintf(buf, sizeof(buf), "%s%s", download_path, file_path);
+    char *last_slash = strrchr(buf, '/');
 
     if (last_slash)
     {
         *last_slash = '\0';
-        if (!make_dir_recursive(file->path, permissions))
+        if (!make_dir_recursive(buf, permissions))
         {
-            *last_slash = '/';
-            printf(ERROR: couldnt make folders for torrent\n");
+            printf("ERROR: couldnt make folders for torrent\n");
             return false;
         }
         *last_slash = '/';
     }
 
 
-    FILE fd = open(file->path, O_CREATE | O_WRONLY, permissions);
+    int fd = open(buf, O_CREAT | O_WRONLY, permissions);
     if (fd == -1)
     {
-        printf(ERROR: couldnt make file\n");
+        printf("ERROR: couldnt make file\n");
         return false;
     }
     
-    if (!fallocate(fd, 0, 0, file->size))
+    if (fallocate(fd, 0, 0, length) != 0)
     {
-        printf(ERROR: couldnt allocate space for file\n");
+        printf("ERROR: couldnt allocate space for file\n");
         close(fd);
         return false;
     }
+    close(fd);
     return true;
 }
