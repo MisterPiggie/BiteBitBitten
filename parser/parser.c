@@ -330,7 +330,12 @@ bool parse_BEN_info_to_TR_info(Arena *arena, const BEN_pair *b_info, TR_info *in
         printf("ERROR: torrent file doesnt have essential fields");
         return false;
     }
+    if (!sanitize_file_BEN_string(&temp_b_value))
+    {
+        return false;
+    }
     info->name = BEN_string_to_C_string(arena, &temp_b_value->string);
+    
 
     temp_b_value = get_BEN_value_by_key(b_info, "piece length");
     if(temp_b_value == NULL)
