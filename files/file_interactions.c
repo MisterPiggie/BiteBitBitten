@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include "../arena/arena.h"
 #include "../utils/str_utils.h"
+#include "../types/types.h"
 
 file_content_buffer *read_BEN_file(Arena *arena, char *file_path)
 {
@@ -101,4 +102,37 @@ bool make_dir_recursive(char *path, int permissions)
 
     free(path_copy);
     return ok;
+}
+
+bool TR_file_make_and_allocate(TR_file *file, int permissions)
+{
+    char *last_slash = strchr(file->path, '/');
+
+    if (last_slash)
+    {
+        *last_slash = '\0';
+        if (!make_dir_recursive(file->path, permissions))
+        {
+            *last_slash = '/';
+            printf(ERROR: couldnt make folders for torrent\n");
+            return false;
+        }
+        *last_slash = '/';
+    }
+
+
+    FILE fd = open(file->path, O_CREATE | O_WRONLY, permissions);
+    if (fd == -1)
+    {
+        printf(ERROR: couldnt make file\n");
+        return false;
+    }
+    
+    if (!fallocate(fd, 0, 0, file->size))
+    {
+        printf(ERROR: couldnt allocate space for file\n");
+        close(fd);
+        return false;
+    }
+    return true;
 }
