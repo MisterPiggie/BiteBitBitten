@@ -19,9 +19,9 @@ void init_CL_session(CL_session *session, Arena *arena)
     const char *home_path = get_home_dir_path();
 
     session->config_dir_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
-    session->config_file_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
-    session->resume_dir_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
-    session->torrent_dir_path = arena_push_strf(arena, "%s/%s",config_path, "bbb");
+    session->config_file_path = arena_push_strf(arena, "%s/%s",session->config_dir_path, "config.pig");
+    session->resume_dir_path = arena_push_strf(arena, "%s/%s",session->config_dir_path, "resume");
+    session->torrent_dir_path = arena_push_strf(arena, "%s/%s",session->config_dir_path, "torrent");
     session->download_folder_path = arena_push_strf(arena, "%s/%s",home_path, "bbb_download");
 
     session->torrents = arena_push_array(arena, TR_torrent* , MAX_TORRENTS);
