@@ -77,8 +77,17 @@ void CMD_add(CL_session *session, int argc, char **argv)
     session->torrents[session->torrents_count++] = tmp_torrent;
 
     session->torrents[session->torrents_count-1]->download_path =
-        arena_push_strf(&tmp_torrent->arena, "%s/%s", session->download_folder_path, session->torrents[session->torrents_count-1]->info->name);
+        arena_push_strf(&tmp_torrent->arena, "%s/%s", session->download_folder_path, tmp_torrents->info->name);
     replace_spaces_with(session->torrents[session->torrents_count-1]->download_path, '_');
+    for (int i; i < tmp_torrent->files_count; i++)
+    {
+        if(!allocate_file(tmp_torrent->download_path,tmp_torrent->files[i].path, tmp_torrent->files[i].length))
+        {
+         arena_destroy(&tmp_torrent->arena);
+arena_destroy(&scratch_arena);
+        return;
+        }
+    }
     arena_destroy(&scratch_arena);
 
 }
