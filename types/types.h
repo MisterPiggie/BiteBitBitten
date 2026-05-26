@@ -142,6 +142,7 @@ typedef struct {
     int         tracker_count;
     int         active_tracker_idx;
     char        *download_path;
+    char        *torrent_file_path;
 
     int         tcp_socket;
     uint64_t    downloaded;

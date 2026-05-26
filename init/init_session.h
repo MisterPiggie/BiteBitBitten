@@ -4,6 +4,8 @@
 //Init funcs for Client
 const char *get_config_dir_path(Arena *arena);
 void init_CL_session(CL_session *session, Arena *arena);
+void init_saved_torrents(CL_session *session);
+void CMD_add_init(CL_session *session, char *path);
 
 //Helper init funcs 
 const char *get_home_dir_path(void);

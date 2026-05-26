@@ -39,6 +39,7 @@ bool parse_BEN_announce_to_TR_info(Arena *arena, const BEN_pair *pairs, TR_info 
 
 //BEN to TR helper funcs
 BEN_value *get_BEN_value_by_key(const BEN_pair *pairs, const char *key); 
+bool sanitize_file_BEN_string(BEN_string *path);
 char *BEN_string_to_C_string(Arena *arena, const BEN_string *b_string);
 void parse_BEN_pieces_to_TR_info(Arena *arena, BEN_string *b_str, TR_info *info);
 bool BEN_string_equals(const BEN_string *b_key, const char *key);

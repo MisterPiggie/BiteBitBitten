@@ -1,10 +1,13 @@
+#define _GNU_SOURCE
 #include "file_interactions.h"
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/stat.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include "../arena/arena.h"
 #include "../utils/str_utils.h"
 #include "../types/types.h"
@@ -50,27 +53,41 @@ file_content_buffer *read_BEN_file(Arena *arena, char *file_path)
 
 bool copy_torrent_file(char *source, char *dest)
 {
-    char ch;
-    FILE *source_fp,  *dest_fp;
+    FILE *source_fp, *dest_fp;
+    char buffer[65536]; 
+    size_t bytes_read;
+    bool ok;
+
     if ((source_fp = fopen(source, "rb")) == NULL)
     {
         return false;
     }
-    
+
     if ((dest_fp = fopen(dest, "wb")) == NULL)
     {
         fclose(source_fp);
         return false;
     }
 
-    while((ch = getc(source_fp)) != EOF)
-        putc(ch, dest_fp);
-    
+    while ((bytes_read = fread(buffer, 1, sizeof(buffer), source_fp)) > 0)
+    {
+        if (fwrite(buffer, 1, bytes_read, dest_fp) != bytes_read)
+        {
+            fclose(source_fp);
+            fclose(dest_fp);
+            return false;
+        }
+    }
+
+    ok = !ferror(source_fp);
+
     fclose(source_fp);
     fclose(dest_fp);
 
-    return true;
+    if (!ok)
+        remove(dest);
 
+    return ok;
 }
 
 bool make_dir(char *path, int permissions)

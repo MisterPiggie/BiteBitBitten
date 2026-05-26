@@ -24,6 +24,8 @@ int main(void)
 
     init_CL_session(&session, &main_arena);
 
+    init_saved_torrents(&session);
+
     while (1) {
         printf("bbb=> ");
         fflush(stdout);

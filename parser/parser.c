@@ -13,7 +13,7 @@ bool reserved_table[256] = {
     ['<'] = true, ['>'] = true, [':'] = true, 
     ['"'] = true, ['/'] = true, ['\\'] = true, 
     ['|'] = true, ['?'] = true, ['*'] = true
-}
+};
 
 
 BEN_parser *init_BEN_parser(Arena *arena, file_content_buffer *buffer)
@@ -330,8 +330,9 @@ bool parse_BEN_info_to_TR_info(Arena *arena, const BEN_pair *b_info, TR_info *in
         printf("ERROR: torrent file doesnt have essential fields");
         return false;
     }
-    if (!sanitize_file_BEN_string(&temp_b_value))
+    if (!sanitize_file_BEN_string(&temp_b_value->string))
     {
+        printf("ERROR: name has malicious filepath\n");
         return false;
     }
     info->name = BEN_string_to_C_string(arena, &temp_b_value->string);
@@ -502,7 +503,7 @@ char *parse_BEN_list_to_path_C_string(Arena *arena, BEN_list *b_list)
     {
         if (!sanitize_file_BEN_string(&path_list->value->string))
         {
-            printf("ERROR: malicious filepath\");
+            printf("ERROR: malicious filepath\n");
             return NULL;
         }
         path_length += path_list->value->string.length;
@@ -551,21 +552,21 @@ bool sanitize_file_BEN_string(BEN_string *path)
     if ( path->length == 0 ||  (path->data[0] == '.' && path->length ==1))
         return false;
 
-    for (i = 0; i < path->length; i++)
+    for (i = 0; i < (int) path->length; i++)
         if (reserved_table[(unsigned char)path->data[i]])
-        path->data[i] = '_';
+            path->data[i] = '_';
 
-    while (start_pos < path->length && path->data[start_pos] == ' ')
-    start_pos++;
+    while (start_pos < (int) path->length && path->data[start_pos] == ' ')
+        start_pos++;
 
     while (end_pos > start_pos && (path->data[end_pos - 1] == ' ' || path->data[end_pos - 1] == '.'))
-    end_pos--;
+        end_pos--;
 
     if (end_pos == start_pos)
-       return false;
-   path->length = end_pos;
-   path->data += start_pos; 
-   path->length -= start_pos;
-   return true;
+        return false;
+    path->length = end_pos;
+    path->data += start_pos; 
+    path->length -= start_pos;
+    return true;
 
 }

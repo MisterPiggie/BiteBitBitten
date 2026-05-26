@@ -1,6 +1,8 @@
 #include "init_session.h"
 #include "../announcer/announcer.h"
 #include "../parser/parser.h"
+#include "../utils/str_utils.h"
+#include "../files/file_interactions.h"
 #include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,6 +12,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <dirent.h>
 
 #define MAX_TORRENTS 128
 
@@ -130,3 +133,82 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
     
 }
 
+void init_saved_torrents(CL_session *session)
+{
+    struct dirent *entry;
+    DIR *dir = opendir(session->torrent_dir_path);
+    if (dir == NULL)
+    {
+        printf("ERROR: couldnt init saved torrents\n");
+        return;
+    }
+
+    char buf[1024];
+
+    while((entry = readdir(dir)) != NULL)
+    {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+        snprintf(buf, sizeof(buf), "%s/%s", session->torrent_dir_path, entry->d_name);
+        printf("%s\n", buf);
+        CMD_add_init(session, buf); 
+    }
+
+    return;
+}
+
+void CMD_add_init(CL_session *session, char *path)
+{
+    file_content_buffer *buffer;
+    BEN_parser          *parser;
+    BEN_value           *dict;
+    TR_torrent          *tmp_torrent;
+
+    Arena scratch_arena = arena_create(MB(100));
+
+    buffer = read_BEN_file(&scratch_arena, path);
+    if (!buffer)
+    {
+        arena_destroy(&scratch_arena);
+        return;
+    }
+    
+    parser = init_BEN_parser(&scratch_arena, buffer);
+
+    dict = parse_dict(&scratch_arena, parser);
+    if (!dict)
+    {
+        arena_destroy(&scratch_arena);
+        return;
+    }
+
+    tmp_torrent = init_TR_torrent(dict->dict);
+    if (!tmp_torrent)
+    {
+        arena_destroy(&scratch_arena);
+        return;
+    }
+
+    get_info_hash(parser, tmp_torrent->info->info_hash);
+
+    session->torrents[session->torrents_count++] = tmp_torrent;
+
+    session->torrents[session->torrents_count-1]->download_path =
+        arena_push_strf(&tmp_torrent->arena, "%s/%s", session->download_folder_path, tmp_torrent->info->name);
+
+    replace_spaces_with(session->torrents[session->torrents_count-1]->download_path, '_');
+
+    for (int i; i < tmp_torrent->info->files_count; i++)
+    {
+        if(!allocate_file(tmp_torrent->download_path,tmp_torrent->info->files[i].path, tmp_torrent->info->files[i].length))
+        {
+            arena_destroy(&tmp_torrent->arena);
+            arena_destroy(&scratch_arena);
+            return;
+        }
+    }
+    arena_destroy(&scratch_arena);
+    tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena, path);
+    
+
+}

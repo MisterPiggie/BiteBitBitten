@@ -40,7 +40,7 @@ void CMD_add(CL_session *session, int argc, char **argv)
         return;
     }
 
-    Arena scratch_arena = arena_create(MB(10));
+    Arena scratch_arena = arena_create(MB(100));
 
     buffer = read_BEN_file(&scratch_arena, argv[1]);
     if (!buffer)
@@ -77,19 +77,23 @@ void CMD_add(CL_session *session, int argc, char **argv)
     session->torrents[session->torrents_count++] = tmp_torrent;
 
     session->torrents[session->torrents_count-1]->download_path =
-        arena_push_strf(&tmp_torrent->arena, "%s/%s", session->download_folder_path, tmp_torrents->info->name);
+        arena_push_strf(&tmp_torrent->arena, "%s/%s", session->download_folder_path, tmp_torrent->info->name);
+
     replace_spaces_with(session->torrents[session->torrents_count-1]->download_path, '_');
-    for (int i; i < tmp_torrent->files_count; i++)
+
+    for (int i; i < tmp_torrent->info->files_count; i++)
     {
-        if(!allocate_file(tmp_torrent->download_path,tmp_torrent->files[i].path, tmp_torrent->files[i].length))
+        if(!allocate_file(tmp_torrent->download_path,tmp_torrent->info->files[i].path, tmp_torrent->info->files[i].length))
         {
-         arena_destroy(&tmp_torrent->arena);
-arena_destroy(&scratch_arena);
-        return;
+            arena_destroy(&tmp_torrent->arena);
+            arena_destroy(&scratch_arena);
+            return;
         }
     }
     arena_destroy(&scratch_arena);
-    if (!copy_torrent_file(argv[1], session->torrent_folder_path))
+    tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena,"%s/%s", session->torrent_dir_path, argv[1]);
+    
+    if (!copy_torrent_file(argv[1], tmp_torrent->torrent_file_path))
     {
         printf("ERROR: couldnt save torrent file after parsing\n");
         return;
@@ -180,6 +184,8 @@ void CMD_delete(CL_session *session, int argc, char **argv)
         return;
     }    
 
+    remove(session->torrents[id]->torrent_file_path);
+
     arena_destroy(&session->torrents[id]->arena);
     session->torrents[id] = session->torrents[session->torrents_count - 1];
     session->torrents_count--;
@@ -209,6 +215,9 @@ void CMD_list(CL_session *session, int argc, char **argv)
 }
 void CMD_help(CL_session *session, int argc, char **argv)
 {
+    (void)session;
+    (void)argc;
+    (void)argv;
     printf("ByteBitBitten Torrent client commands:\n\tadd <filepath to .torrent file> - adding torrent to download\n\tdelete <id> - delete torrent with entered id\n\tlist - list all added torrents with id\n\tprint <id> - print extended information about torrent with entered id\n\thelp - see this message again");
     return;
 }

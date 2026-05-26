@@ -6,6 +6,7 @@
 
 file_content_buffer *read_BEN_file(Arena *arena, char *file_path);
 bool save_state_in_file(BEN_value *value);
+bool copy_torrent_file(char *source, char *dest);
 
 bool make_dir(char *path, int permissions);
 bool make_dir_recursive(char *path, int permissions);

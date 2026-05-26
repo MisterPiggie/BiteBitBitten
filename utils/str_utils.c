@@ -90,7 +90,7 @@ int contains_suffix(char *str, char *suffix)
 
     for (i = 0; i < suffix_len; i++)
     {
-        if (suffix[suffix_len - 1 - i] !=  str[str_len - 1 - i]
+        if (suffix[suffix_len - 1 - i] !=  str[str_len - 1 - i])
             return 0;
     }
 
