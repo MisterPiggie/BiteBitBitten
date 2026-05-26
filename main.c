@@ -52,7 +52,6 @@ int main(void)
     return 0;
 }
     
-    //
     // for (i = 0; i < info->trackers_length; i++)
     // {
     //     err = UDP_send_connect_req(session->udp_socket, &torrent->tracks[i]);
