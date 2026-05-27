@@ -42,19 +42,19 @@ void make_announce_req(TR_torrent *tr, EV_loop *loop)
     for (i = 0; i < tr->tracker_count; i++)
     {
         if (strcmp(tr->tracks[i].schema, "https"))
-            if (make_HTTP_announce(tr, peer_id))
+            if (make_HTTP_announce(tr, loop->session->peer_id))
             {
                 tr->active_tracker_idx = i;
                 return;
             }
         if (strcmp(tr->tracks[i].schema, "http"))
-            if (make_HTTP_announce(tr, peer_id))
+            if (make_HTTP_announce(tr, loop->session->peer_id))
             {
                 tr->active_tracker_idx = i;
                 return;
             }
         if (strcmp(tr->tracks[i].schema, "udp"))
-            if (make_UDP_announce(tr, peer_id))
+            if (make_UDP_announce(tr, loop->session->peer_id))
             {
                 tr->active_tracker_idx = i;
                 return;
