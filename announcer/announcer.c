@@ -107,3 +107,14 @@ int tracker_string_to_NET_tracker(Arena *arena, char *url, NET_tracker *track)
     return 0;
 }
 
+int send_announce(TR_torrent *torrent, NET_tracker *tracker)
+{
+    if (strcmp(tracker->schema, "udp"))
+        send_UDP_announce(tracker);
+    if (strcmp(tracker->schema, "https"))
+        send_HTTP_announce(tracker);
+    if (strcmp(tracker->schema, "http"))
+        send_HTTP_announce(tracker);
+
+    return 0;
+}

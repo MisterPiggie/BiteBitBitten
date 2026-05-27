@@ -5,6 +5,11 @@
 #include <stdint.h>
 #include "../arena/arena.h"
 
+typedef enum {
+    NEEDS_ANNOUNCE,
+    ANNOUNCING,
+    ANNOUNCED,
+} TR_track_state;
 
 //FILE structs
 typedef struct {
@@ -137,16 +142,18 @@ typedef struct {
 typedef struct {
     Arena       arena;
 
-    TR_info     *info;
-    NET_tracker *tracks;
-    int         tracker_count;
-    int         active_tracker_idx;
-    char        *download_path;
-    char        *torrent_file_path;
+    TR_info         *info;
+    NET_tracker     *tracks;
+    int             tracker_count;
+    int             active_tracker_idx;
+    char            *download_path;
+    char            *torrent_file_path;
 
-    int         tcp_socket;
-    uint64_t    downloaded;
-    uint64_t    uploaded;
+    int             tcp_socket;
+    uint64_t        downloaded;
+    uint64_t        uploaded;
+
+    TR_track_state  track_state;
 } TR_torrent;
 
 typedef struct {

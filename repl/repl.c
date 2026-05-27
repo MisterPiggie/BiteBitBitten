@@ -90,6 +90,7 @@ void CMD_add(CL_session *session, int argc, char **argv)
             return;
         }
     }
+    tmp_torrent->track_state = NEEDS_ANNOUNCE;
     arena_destroy(&scratch_arena);
     tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena,"%s/%s", session->torrent_dir_path, argv[1]);
     
@@ -98,6 +99,7 @@ void CMD_add(CL_session *session, int argc, char **argv)
         printf("ERROR: couldnt save torrent file after parsing\n");
         return;
     }
+
 
 }
 

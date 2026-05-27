@@ -15,16 +15,17 @@
 #include "utils/str_utils.h"
 #include "arena/arena.h"
 
-int main(void) 
-{
+int main(void) {
     char  line[MAX_CHARS];
     char *argv[MAX_ARGS];
     Arena main_arena = arena_create(GB(1));
     CL_session session = {0};
-
+    EV_loop loop;
+    
     init_CL_session(&session, &main_arena);
-
     init_saved_torrents(&session);
+    init_EV_loop(&loop, &session);
+
 
     while (1) {
         printf("bbb=> ");
@@ -52,31 +53,4 @@ int main(void)
     return 0;
 }
     
-    // for (i = 0; i < info->trackers_length; i++)
-    // {
-    //     err = UDP_send_connect_req(session->udp_socket, &torrent->tracks[i]);
-    //     if (err != 0)
-    //     {
-    //         printf("ERROR: send connect req\n");
-    //         continue;
-    //     }
-    //     printf("Connection ID before recv: %lu\n", torrent->tracks[i].connection_id);
-    //
-    //     err = UDP_recv_connect_req(session->udp_socket, &torrent->tracks[i]);
-    //     if (err != 0)
-    //     {
-    //         printf("ERROR: send recv req\n");
-    //         continue;
-    //     }
-    //
-    //     printf("Connection ID after recv: %lu\n", torrent->tracks[i].connection_id);
-    //     torrent->active_tracker_idx = i;
-    //     UDP_request req;
-    //     construct_UDP_request(&req, torrent);
-    //     if(UDP_send_announce_req(session, torrent, &req) != 0)
-    //         printf("ERROR: send announce req\n");
-    //
-    //     if(UDP_recv_announce_resp(session->udp_socket) != 0)
-    //         printf("ERROR: recv announce resp\n");
-    // }
-    //
+    
