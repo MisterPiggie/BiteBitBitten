@@ -1,7 +1,7 @@
 #include <netinet/in.h>
 #include <stdint.h>
-#include <event2/event.h>
 #include "../types/types.h"
+#include "../event_loop/event_loop.h"
 
 #define  DEFAULT_PORT 6881
 #define UDP_MAGIC_NUMBER 0x41727101980
@@ -26,6 +26,8 @@ void generate_peer_id(unsigned char peer_id[20]);
 void HTTP_url_encode_hash(const uint8_t *hash_info, char *out);
 
 
+void ANN_announcer_tick(CL_session *session, EV_loop *loop);
+void make_announce_req(TR_torrent *tr, EV_loop *loop);
 
 uint32_t get_random_u32(void);
 

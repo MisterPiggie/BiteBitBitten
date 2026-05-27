@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <stddef.h>
+#include <time.h>
 #include <stdint.h>
 #include "../arena/arena.h"
 
@@ -154,6 +155,7 @@ typedef struct {
     uint64_t        uploaded;
 
     TR_track_state  track_state;
+    time_t          next_announce;
 } TR_torrent;
 
 typedef struct {
@@ -165,7 +167,6 @@ typedef struct {
     char *config_file_path;
 
     uint8_t      peer_id[20];
-    int          udp_socket;
     TR_torrent   **torrents;
     int          torrents_count;
 

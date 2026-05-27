@@ -8,6 +8,61 @@
 #include <sys/random.h>
 
 
+void ANN_announcer_tick(CL_session *session, EV_loop *loop)
+{
+    int i;
+
+    for (i = 0; i < session->torrents_count; i++)
+    {
+        TR_torrent *tr = session->torrents[i];
+        switch (tr->track_state)
+        {
+            case NEEDS_ANNOUNCE:
+                make_announce_req(tr, loop);
+                tr->track_state = ANNOUNCING;
+                break;
+            case ANNOUNCING:
+                break;
+            case ANNOUNCED:
+                if (time(NULL) > tr->next_announce)
+                {
+                    make_announce_req(tr, loop);
+                    tr->track_state = ANNOUNCING;
+                }
+                break;
+        }
+    }
+    return;
+}
+
+
+void make_announce_req(TR_torrent *tr, EV_loop *loop)
+{
+    int i;
+    for (i = 0; i < tr->tracker_count; i++)
+    {
+        if (strcmp(tr->tracks[i].schema, "https"))
+            if (make_HTTP_announce(tr, peer_id))
+            {
+                tr->active_tracker_idx = i;
+                return;
+            }
+        if (strcmp(tr->tracks[i].schema, "http"))
+            if (make_HTTP_announce(tr, peer_id))
+            {
+                tr->active_tracker_idx = i;
+                return;
+            }
+        if (strcmp(tr->tracks[i].schema, "udp"))
+            if (make_UDP_announce(tr, peer_id))
+            {
+                tr->active_tracker_idx = i;
+                return;
+            }
+    }
+    return;
+}
+
 void generate_peer_id(unsigned char peer_id[20])
 {
    unsigned char buf[12];
@@ -107,14 +162,3 @@ int tracker_string_to_NET_tracker(Arena *arena, char *url, NET_tracker *track)
     return 0;
 }
 
-int send_announce(TR_torrent *torrent, NET_tracker *tracker)
-{
-    if (strcmp(tracker->schema, "udp"))
-        send_UDP_announce(tracker);
-    if (strcmp(tracker->schema, "https"))
-        send_HTTP_announce(tracker);
-    if (strcmp(tracker->schema, "http"))
-        send_HTTP_announce(tracker);
-
-    return 0;
-}

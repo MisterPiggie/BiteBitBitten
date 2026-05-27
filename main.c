@@ -4,8 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include "repl/repl.h"
 #include "announcer/announcer.h"
 #include "files/file_interactions.h"
@@ -14,6 +16,7 @@
 #include "types/types.h"
 #include "utils/str_utils.h"
 #include "arena/arena.h"
+#include "event_loop/event_loop.h"
 
 int main(void) {
     char  line[MAX_CHARS];
@@ -21,34 +24,78 @@ int main(void) {
     Arena main_arena = arena_create(GB(1));
     CL_session session = {0};
     EV_loop loop;
+    int n, i;
     
     init_CL_session(&session, &main_arena);
     init_saved_torrents(&session);
     init_EV_loop(&loop, &session);
 
+    struct epoll_event ev =
+    {
+        .events = EPOLLIN,
+        .data.fd = STDIN_FILENO,
+    };
+    epoll_ctl(loop.epollfd, EPOLL_CTL_ADD, STDIN_FILENO, &ev);
+    printf("bbb=> ");
+    fflush(stdout);
+
+    struct epoll_event events[64];
 
     while (1) {
-        printf("bbb=> ");
-        fflush(stdout);
-
-        if (!fgets(line, sizeof(line), stdin)) break; 
-
-        line[strcspn(line, "\n")] = '\0';
-        if (line[0] == '\0') continue;                 
-        if (strcmp(line, "exit") == 0) 
+        n = epoll_wait(loop.epollfd, events, 64, -1);
+        for (i = 0; i < n; i++)
         {
-            for (int i = 0; i < session.torrents_count; i++)
+            int fd = events[i].data.fd;
+
+            if (fd == STDIN_FILENO)
             {
-                arena_destroy(&session.torrents[i]->arena);
+                if (!fgets(line, sizeof(line), stdin))
+                {
+                    for (int i = 0; i < session.torrents_count; i++)
+                    {
+                        arena_destroy(&session.torrents[i]->arena);
+                    }
+                    arena_destroy(&main_arena);
+                    break;
+                }
+                line[strcspn(line, "\n")] = '\0';
+
+                if (line[0] == '\0') 
+                    continue;                 
+
+                if (strcmp(line, "exit") == 0) 
+                {
+                    for (int i = 0; i < session.torrents_count; i++)
+                    {
+                        arena_destroy(&session.torrents[i]->arena);
+                    }
+                    arena_destroy(&main_arena);
+                    break;
+                }
+
+                int argc = tokenize(line, argv, MAX_ARGS);
+                dispatch(&session, argc, argv);
+
+                printf("bbb=> ");
+                fflush(stdout);
+            } else if (fd == loop.announcer_timerfd) 
+            {
+                uint64_t exp;
+                read(fd, &exp, 8);
+                ANN_announcer_tick(&loop);
+            } else if (fd == loop.peer_timerfd) 
+            {
+                continue;
+            } else if (fd == loop.udp_socket)
+            {
+                continue;
+            } else 
+            {
+                continue;
             }
-            arena_destroy(&main_arena);
-            break;
         }
 
-        int argc = tokenize(line, argv, MAX_ARGS);
-        dispatch(&session, argc, argv);
     }
-
     puts("Bye!");
     return 0;
 }

@@ -34,12 +34,6 @@ void init_CL_session(CL_session *session, Arena *arena)
 
     session->main_arena = arena;
     
-    session->udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (session->udp_socket == -1)
-        return;
-    struct timeval tv = { .tv_sec = 3, .tv_usec = 0};
-    setsockopt(session->udp_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-
     init_reserved_table();
     return;
 }

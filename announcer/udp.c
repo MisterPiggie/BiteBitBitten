@@ -61,8 +61,8 @@ int UDP_send_announce_req(CL_session *session, TR_torrent *torrent, UDP_request 
     memcpy(buf + 92, &num_want, 4);
     memcpy(buf + 96, &port, 2);
     
-    if (UDP_sendto(session->udp_socket, &torrent->tracks[torrent->active_tracker_idx], buf, sizeof(buf)) != 0)
-        return -1;
+    // if (UDP_sendto(session->udp_socket, &torrent->tracks[torrent->active_tracker_idx], buf, sizeof(buf)) != 0)
+    //     return -1;
 
     return  0;
 }
