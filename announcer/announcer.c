@@ -18,7 +18,7 @@ void ANN_announcer_tick(CL_session *session, EV_loop *loop)
         switch (tr->track_state)
         {
             case NEEDS_ANNOUNCE:
-                make_announce_req(tr, loop);
+                make_connect_req(tr, loop);
                 tr->track_state = ANNOUNCING;
                 break;
             case ANNOUNCING:
