@@ -164,7 +164,7 @@ typedef struct
     int            bitfield_len;
 
     time_t         last_tried;
-    int            tries_count;
+    int            failed_tries;
 }
 
 typedef struct 
