@@ -6,6 +6,18 @@
 #include <stdint.h>
 #include "../arena/arena.h"
 
+
+#define PEER_AM_CHOKING (1 << 0)
+#define PEER_AM_INTERESTED (1 << 1)
+#define PEER_CHOKING_US (1 << 2)
+#define PEER_INTERESTED_IN_US (1 << 3)
+
+typedef enum {
+    NOT_CONNECTED,
+    CONNECTED,
+    BANNED,
+}
+
 typedef enum {
     NEEDS_ANNOUNCE,
     ANNOUNCING,
@@ -138,6 +150,28 @@ typedef struct {
     uint32_t    key;
 } NET_tracker;
 
+typedef struct
+}
+    uint32_t       ip;
+    uint8_t        port;  
+
+    int            sock;
+
+    TR_peer_state  peer_state;
+    uint8_t        bitmask_state;
+
+    uint8_t        *bitfield;
+    int            bitfield_len;
+}
+
+typedef struct 
+{
+    TR_peer *peer_pool[200];
+    int     pool_count;
+
+    TR_peer *peers[50];
+    int     peers_count; 
+}
 
 
 typedef struct {
@@ -156,6 +190,8 @@ typedef struct {
 
     TR_track_state  track_state;
     time_t          next_announce;
+
+    TR_swarm        *swarm;
 } TR_torrent;
 
 typedef struct {
