@@ -162,6 +162,9 @@ typedef struct
 
     uint8_t        *bitfield;
     int            bitfield_len;
+
+    time_t         last_tried;
+    int            tries_count;
 }
 
 typedef struct 
