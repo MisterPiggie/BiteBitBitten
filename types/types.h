@@ -16,7 +16,14 @@ typedef enum {
     NOT_CONNECTED,
     CONNECTED,
     BANNED,
-}
+} TR_peer;
+
+typedef enum {
+    TRACKER_IDLE,
+    TRACKDR_ANNOUNCING,
+    TRACKER_ALIVE,
+    TRACKDR_FAILED,
+} UDP_state;
 
 typedef enum {
     NEEDS_ANNOUNCE,
@@ -120,39 +127,24 @@ typedef struct {
 
 
 typedef struct {
-    uint64_t connection_id;
-    uint32_t action;
-    uint32_t transction_id;
+    uint32_t    transction_id;
+    time_t      sent_at
 
-    uint8_t  *peer_id;
-    uint8_t  *hash_info;
-
-    uint64_t downloaded;
-    uint64_t left;
-    uint64_t uploaded;
-
-    uint32_t event;
-    uint32_t ip;
-    uint32_t key;
-
-    int32_t  num_want;
-    uint16_t port;
+    TR_torrent  *torrent;
+    NET_tracker *tracker;
 } UDP_request;
 
 
 
 typedef struct {
-    char     *schema;
-    char     *host;
-    char     *path;
-    uint16_t port;
+    char      *schema;
+    char      *host;
+    char      *path;
+    uint16_t  port;
 
-    uint64_t connection_id;
+    uint64_t  connection_id;
+    UDP_state state;
 
-    UDP_request *reqs;
-    int         reqs_count;
-
-    uint32_t    key;
 } NET_tracker;
 
 typedef struct
@@ -170,7 +162,7 @@ typedef struct
 
     time_t         last_tried;
     int            failed_tries;
-}
+} TR_peer;
 
 typedef struct 
 {
