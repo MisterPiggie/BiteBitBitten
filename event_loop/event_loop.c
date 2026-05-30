@@ -8,15 +8,15 @@ void init_EV_loop(EV_loop *loop, CL_session *session)
     loop->session = session;
     loop->epollfd = epoll_create1(0);
      
-    loop->announcer_timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+    loop->client_timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 
     struct itimerspec ts =
     {
         .it_interval = {1, 0},
         .it_value = {1, 0},
     };
-    timerfd_settime(loop->announcer_timerfd, 0, &ts, NULL);
-    epoll_add(loop->epollfd, loop->announcer_timerfd, EPOLLIN);
+    timerfd_settime(loop->client_timerfd, 0, &ts, NULL);
+    epoll_add(loop->epollfd, loop->client_timerfd, EPOLLIN);
 
 
     loop->peer_timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);

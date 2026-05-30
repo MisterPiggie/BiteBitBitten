@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include "../types/types.h"
 #include "../files/file_interactions.h"
 #include "../parser/parser.h"
@@ -90,7 +91,7 @@ void CMD_add(CL_session *session, int argc, char **argv)
             return;
         }
     }
-    tmp_torrent->track_state = NEEDS_ANNOUNCE;
+    tmp_torrent->state = TORRENT_DOWNLOADING;
     arena_destroy(&scratch_arena);
     tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena,"%s/%s", session->torrent_dir_path, argv[1]);
     

@@ -12,23 +12,26 @@
 #define PEER_CHOKING_US (1 << 2)
 #define PEER_INTERESTED_IN_US (1 << 3)
 
+typedef enum 
+{
+    TORRENT_DOWNLOADING,
+    TORRENT_CHECKING,
+    TORRENT_SEEDING,
+    TORRENT_PAUSED,
+    TORRENT_FAILED,
+} TR_state;
+
 typedef enum {
     NOT_CONNECTED,
     CONNECTED,
     BANNED,
-} TR_peer;
+} TR_peer_state;
 
 typedef enum {
     TRACKER_IDLE,
-    TRACKDR_ANNOUNCING,
+    TRACKER_ANNOUNCING,
     TRACKER_ALIVE,
-    TRACKDR_FAILED,
-} UDP_state;
-
-typedef enum {
-    NEEDS_ANNOUNCE,
-    ANNOUNCING,
-    ANNOUNCED,
+    TRACKER_FAILED,
 } TR_track_state;
 
 //FILE structs
@@ -126,13 +129,6 @@ typedef struct {
 } TR_info;
 
 
-typedef struct {
-    uint32_t    transction_id;
-    time_t      sent_at
-
-    TR_torrent  *torrent;
-    NET_tracker *tracker;
-} UDP_request;
 
 
 
@@ -143,12 +139,18 @@ typedef struct {
     uint16_t  port;
 
     uint64_t  connection_id;
-    UDP_state state;
+    TR_track_state state;
+
+    time_t    last_announce;
+    time_t    announce_sent_at;
+
+    int       interval;
+
 
 } NET_tracker;
 
 typedef struct
-}
+{
     uint32_t       ip;
     uint8_t        port;  
 
@@ -164,6 +166,7 @@ typedef struct
     int            failed_tries;
 } TR_peer;
 
+
 typedef struct 
 {
     TR_peer *peer_pool[200];
@@ -171,11 +174,12 @@ typedef struct
 
     TR_peer *peers[50];
     int     peers_count; 
-}
+} TR_swarm;
 
 
 typedef struct {
     Arena       arena;
+    TR_state    state;
 
     TR_info         *info;
     NET_tracker     *tracks;
@@ -195,6 +199,14 @@ typedef struct {
 } TR_torrent;
 
 typedef struct {
+    uint32_t    transction_id;
+    time_t      sent_at;
+
+    TR_torrent  *torrent;
+    NET_tracker *tracker;
+} UDP_request;
+
+typedef struct {
     
     char *download_folder_path;
     char *resume_dir_path;
@@ -205,9 +217,7 @@ typedef struct {
     uint8_t      peer_id[20];
     TR_torrent   **torrents;
     int          torrents_count;
-
     Arena        *main_arena;
-
 } CL_session;
 
 #endif 

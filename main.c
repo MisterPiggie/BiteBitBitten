@@ -16,6 +16,7 @@
 #include "types/types.h"
 #include "utils/str_utils.h"
 #include "arena/arena.h"
+#include "client/client.h"
 #include "event_loop/event_loop.h"
 
 int main(void) {
@@ -78,11 +79,11 @@ int main(void) {
 
                 printf("bbb=> ");
                 fflush(stdout);
-            } else if (fd == loop.announcer_timerfd) 
+            } else if (fd == loop.client_timerfd) 
             {
                 uint64_t exp;
                 read(fd, &exp, 8);
-                ANN_announcer_tick(&loop);
+                CL_client_tick(&loop);
             } else if (fd == loop.peer_timerfd) 
             {
                 continue;

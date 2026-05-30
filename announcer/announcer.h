@@ -26,8 +26,12 @@ void generate_peer_id(unsigned char peer_id[20]);
 void HTTP_url_encode_hash(const uint8_t *hash_info, char *out);
 
 
-void ANN_announcer_tick(CL_session *session, EV_loop *loop);
-void make_announce_req(TR_torrent *tr, EV_loop *loop);
+void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr);
+void ANN_refill_peers(EV_loop *loop, TR_torrent *tr);
+
+void ANN_make_announce_req(TR_torrent *tr, EV_loop *loop);
+void make_HTTP_announce(TR_torrent *tr, uint8_t *peer_id);
+void make_UDP_connect(TR_torrent *tr, uint8_t *peer_id);
 
 uint32_t get_random_u32(void);
 

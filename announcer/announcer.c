@@ -8,58 +8,56 @@
 #include <sys/random.h>
 
 
-void ANN_announcer_tick(CL_session *session, EV_loop *loop)
+void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
 {
-    int i;
-
-    for (i = 0; i < session->torrents_count; i++)
+    NET_tracker *tracker = &tr->tracks[tr->active_tracker_idx];
+    switch (tracker->state)
     {
-        TR_torrent *tr = session->torrents[i];
-        switch (tr->track_state)
-        {
-            case NEEDS_ANNOUNCE:
-                make_connect_req(tr, loop);
-                tr->track_state = ANNOUNCING;
-                break;
-            case ANNOUNCING:
-                break;
-            case ANNOUNCED:
-                if (time(NULL) > tr->next_announce)
-                {
-                    make_announce_req(tr, loop);
-                    tr->track_state = ANNOUNCING;
-                }
-                break;
-        }
+        case TRACKER_IDLE:
+            ANN_make_announce_req(tr, loop);
+            tr->track_state = TRACKER_ANNOUNCING;
+            tracker->announce_sent_at = time(NULL);
+            break;
+        case TRACKER_ANNOUNCING:
+            if (time(NULL) - tracker->announce_sent_at > 15)
+            {
+                tracker->state = TRACKER_FAILED;
+                if (++tr->active_tracker_idx >= tr->tracker_count)
+                    tr->state = TORRENT_FAILED;
+            }
+            break;
+        case TRACKER_ALIVE:
+            if (time(NULL) - tracker->last_announce > tracker->interval)
+            {
+                ANN_make_announce_req(tr, loop);
+                tr->track_state = TRACKER_ANNOUNCING;
+                tracker->announce_sent_at = time(NULL);
+            }
+            break;
+        case TRACKER_FAILED:
+            if (++tr->active_tracker_idx >= tr->tracker_count)
+                tr->state = TORRENT_FAILED;
+            break;
     }
-    return;
 }
 
 
-void make_announce_req(TR_torrent *tr, EV_loop *loop)
+void ANN_make_announce_req(TR_torrent *tr, EV_loop *loop)
 {
-    int i;
-    for (i = 0; i < tr->tracker_count; i++)
+    NET_tracker *tracker = &tr->tracks[tr->active_tracker_idx];
+    if (strcmp(tracker->schema, "https") == 0 ||
+        strcmp(tracker->schema, "http") == 0)
     {
-        if (strcmp(tr->tracks[i].schema, "https"))
-            if (make_HTTP_announce(tr, loop->session->peer_id))
-            {
-                tr->active_tracker_idx = i;
-                return;
-            }
-        if (strcmp(tr->tracks[i].schema, "http"))
-            if (make_HTTP_announce(tr, loop->session->peer_id))
-            {
-                tr->active_tracker_idx = i;
-                return;
-            }
-        if (strcmp(tr->tracks[i].schema, "udp"))
-            if (make_UDP_announce(tr, loop->session->peer_id))
-            {
-                tr->active_tracker_idx = i;
-                return;
-            }
+        make_HTTP_announce(tr, loop->session->peer_id);
+        return;
     }
+
+    if (strcmp(tracker->schema, "udp") == 0)
+    {
+        make_UDP_connect(tr, loop->session->peer_id);
+        return;
+    }
+
     return;
 }
 
@@ -157,7 +155,6 @@ int tracker_string_to_NET_tracker(Arena *arena, char *url, NET_tracker *track)
     path_start = strchr(colon + 1, '/');
     track->path = path_start ? arena_push_str(arena, path_start) : arena_push_str(arena, "/");
 
-    track->reqs_count = 0;
 
     return 0;
 }

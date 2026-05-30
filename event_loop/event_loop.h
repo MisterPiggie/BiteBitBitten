@@ -1,3 +1,7 @@
+#ifndef EVENT_LOOP_H
+#define EVENT_LOOP_H
+
+
 #include "../types/types.h"
 
 typedef struct
@@ -5,7 +9,7 @@ typedef struct
     CL_session  *session;
 
     int         epollfd;
-    int         announcer_timerfd;
+    int         client_timerfd;
     int         peer_timerfd;
 
     int         udp_socket;
@@ -13,3 +17,4 @@ typedef struct
 
 void init_EV_loop(EV_loop *loop, CL_session *session);
 void epoll_add(int epollfd, int fd, uint32_t events);
+#endif

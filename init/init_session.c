@@ -120,7 +120,6 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
             arena_destroy(&torrent_arena);
             return NULL;
         }
-        torrent->tracks[i].key = get_random_u32();
     }
 
     return torrent;
@@ -202,6 +201,7 @@ void CMD_add_init(CL_session *session, char *path)
         }
     }
     arena_destroy(&scratch_arena);
+    tmp_torrent->state = TORRENT_DOWNLOADING;
     tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena, path);
     
 
