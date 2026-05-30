@@ -28,6 +28,8 @@ typedef enum {
 } TR_peer_state;
 
 typedef enum {
+    TRACKER_NOT_RESOLVED,
+    TRACKER_RESOLVING,
     TRACKER_IDLE,
     TRACKER_ANNOUNCING,
     TRACKER_ALIVE,
