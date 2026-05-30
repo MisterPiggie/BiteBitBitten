@@ -154,6 +154,8 @@ int tracker_string_to_NET_tracker(Arena *arena, char *url, NET_tracker *track)
 
     path_start = strchr(colon + 1, '/');
     track->path = path_start ? arena_push_str(arena, path_start) : arena_push_str(arena, "/");
+   
+    track->state =TRACKER_NOT_RESOLVED;
 
 
     return 0;
