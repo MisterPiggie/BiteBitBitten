@@ -44,12 +44,16 @@ void make_UDP_connect(TR_torrent *tr, EV_loop *loop)
     ssize_t bytes;
     UDP_request *req = NULL;
     uint8_t buf[2048];
+    printf("UDP response received\n");
     bytes = recvfrom(loop->udp_socket, buf, sizeof(buf), 0, NULL, NULL);
     if (bytes < 8) 
         return;
     
     uint32_t action = ntohl(*(uint32_t *)buf);
     uint32_t transaction_id = ntohl(*(uint32_t *)(buf + 4));
+
+    printf("action=%u transaction_id=%u\n", action, transaction_id);
+    printf("pending count=%d\n", loop->udp_requests_count);
 
     for( i = 0; i < loop->udp_requests_count; i++)
     {
@@ -61,7 +65,10 @@ void make_UDP_connect(TR_torrent *tr, EV_loop *loop)
     }
 
     if (!req)
+    {
+        printf("no matching request found\n");
         return;
+    }
 
     switch (action)
     {
@@ -127,4 +134,18 @@ void make_UDP_announce(TR_torrent *tr, EV_loop *loop)
     req->tracker        = tracker;
     req->torrent        = tr;
     req->sent_at        = time(NULL);
+}
+
+int UDP_sendto(int sock, NET_tracker *track, const uint8_t *buf, size_t len)
+{
+    struct sockaddr_in addr = {
+        .sin_family      = AF_INET,
+        .sin_addr.s_addr = track->ip,
+        .sin_port        = htons(track->port),
+    };
+
+    ssize_t sent = sendto(sock, buf, len, 0,
+            (struct sockaddr *)&addr, sizeof(addr));
+
+    return sent == (ssize_t)len ? 0 : -1;
 }

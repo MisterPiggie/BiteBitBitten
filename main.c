@@ -27,7 +27,7 @@ int main(void) {
     CL_session session = {0};
     EV_loop loop;
     CL_threadpool pool;
-    int n, i;
+    int n, i, running = 1;
     
     init_CL_session(&session, &main_arena);
     init_saved_torrents(&session);
@@ -46,7 +46,7 @@ int main(void) {
 
     struct epoll_event events[64];
 
-    while (1) {
+    while (running) {
         n = epoll_wait(loop.epollfd, events, 64, -1);
         for (i = 0; i < n; i++)
         {
@@ -70,11 +70,7 @@ int main(void) {
 
                 if (strcmp(line, "exit") == 0) 
                 {
-                    for (int i = 0; i < session.torrents_count; i++)
-                    {
-                        arena_destroy(&session.torrents[i]->arena);
-                    }
-                    arena_destroy(&main_arena);
+                    running = 0;
                     break;
                 }
 
@@ -93,16 +89,22 @@ int main(void) {
                 continue;
             } else if (fd == loop.udp_socket)
             {
-                // UDP_readable(&loop);
+                UDP_readable(&loop);
                 continue;
             } else if (fd == loop.notify_pipe[0])
             {
-                // notify_pipe_readable(&loop);
+                notify_pipe_readable(&loop);
                 continue;
             }
         }
 
     }
+    for (int i = 0; i < session.torrents_count; i++)
+    {
+        arena_destroy(&session.torrents[i]->arena);
+    }
+    arena_destroy(&main_arena);
+    threadpool_destroy(&pool);
     puts("Bye!");
     return 0;
 }

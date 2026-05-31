@@ -14,7 +14,7 @@ void CL_client_tick(EV_loop  *loop)
 
             case TORRENT_DOWNLOADING:
                 ANN_announcer_tick(loop, tr);
-                ANN_refill_peers(loop, tr);
+                // ANN_refill_peers(loop, tr);
                 break;
 
             case TORRENT_NEEDS_CHECK:

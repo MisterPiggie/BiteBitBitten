@@ -1,5 +1,6 @@
 #include "announcer.h"
 #include <stdlib.h>
+#include <curl/curl.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -12,6 +13,7 @@
 void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
 {
     NET_tracker *tracker = &tr->tracks[tr->active_tracker_idx];
+    printf("tick: tracker state = %d\n", tracker->state);
     switch (tracker->state)
     {
         case TRACKER_NOT_RESOLVED:
@@ -47,6 +49,7 @@ void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
             break;
     }
 }
+
 
 void ANN_resolve_tracker(TR_torrent *tr, EV_loop *loop)
 {
@@ -113,7 +116,7 @@ void generate_peer_id(unsigned char peer_id[20])
    }
 }
 
-void url_encode_hash(const uint8_t *hash_info, char *out)
+void HTTP_url_encode_hash(const uint8_t *hash_info, char *out)
 {
     //OUT MUST BE 61 CHARS LONG
     int i;
@@ -221,4 +224,5 @@ void peer_pool_add(TR_torrent *tr, uint32_t ip, uint16_t port)
     peer->ip = ip;
     peer->port = port;
     peer->peer_state = NOT_CONNECTED;
+    printf("Peer: %lu:%u\n", (unsigned long) ip, port);
 }

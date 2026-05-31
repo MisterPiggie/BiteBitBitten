@@ -12,6 +12,7 @@ void *worker(void *arg);
 void threadpool_init(CL_threadpool *pool);
 void threadpool_push(CL_threadpool *pool, task_fn fn, void *arg);
 void threadpool_destroy(CL_threadpool *pool);
+void notify_pipe_readable(EV_loop *loop);
 
 //Tasks
 
@@ -31,12 +32,41 @@ typedef struct
     uint32_t    ip;
 } DNS_resolve_result;
 
+
+typedef struct 
+{
+    CL_session  *session;
+    TR_torrent  *torrent;
+    NET_tracker *tracker;
+    int         pipefd;
+} HTTP_announce_args;
+
+typedef struct 
+{
+    NET_tracker *tracker;
+    TR_torrent  *torrent;
+
+    bool        success;
+    int         interval;
+
+    uint8_t     *peers;
+    int         peers_len;
+} HTTP_announce_result;
+
+
 typedef enum 
 {
     NOTIFY_DNS_RESOLVE,
     NOTIFY_SHA1_VERIFY,
     NOTIFY_DISK_WRITE,
+    NOTIFY_HTTP_RESPONSE,
 } notify_type;
+
+typedef struct
+{
+    uint8_t *buf;
+    size_t  len;
+} CURL_buf;
 
 typedef struct 
 {
@@ -44,13 +74,18 @@ typedef struct
     union 
     {
         DNS_resolve_result dns;
+        HTTP_announce_result http;
         // SHA1_verify_result sha1;
         // disk_write_result disk;
     };
 } notify_result;
 
 void task_resolve_DNS(void *arg);
+void task_HTTP_announce(void *arg);
 
+size_t curl_write_cb(void *data, size_t size, size_t nmemb, void *userp);
+    
 void handle_dns_result(EV_loop *loop, DNS_resolve_result *result);
+void handle_HTTP_response(EV_loop *loop, HTTP_announce_result *result);
 
 #endif
