@@ -18,6 +18,7 @@
 #include "arena/arena.h"
 #include "client/client.h"
 #include "event_loop/event_loop.h"
+#include "threads/pool_thread.h"
 
 int main(void) {
     char  line[MAX_CHARS];
@@ -25,17 +26,20 @@ int main(void) {
     Arena main_arena = arena_create(GB(1));
     CL_session session = {0};
     EV_loop loop;
+    CL_threadpool pool;
     int n, i;
     
     init_CL_session(&session, &main_arena);
     init_saved_torrents(&session);
-    init_EV_loop(&loop, &session);
+    threadpool_init(&pool);
+    init_EV_loop(&loop, &session, &pool);
 
     struct epoll_event ev =
     {
         .events = EPOLLIN,
         .data.fd = STDIN_FILENO,
     };
+
     epoll_ctl(loop.epollfd, EPOLL_CTL_ADD, STDIN_FILENO, &ev);
     printf("bbb=> ");
     fflush(stdout);
@@ -89,9 +93,11 @@ int main(void) {
                 continue;
             } else if (fd == loop.udp_socket)
             {
+                // UDP_readable(&loop);
                 continue;
-            } else 
+            } else if (fd == loop.notify_pipe[0])
             {
+                // notify_pipe_readable(&loop);
                 continue;
             }
         }

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <time.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <pthread.h>
 #include "../arena/arena.h"
 
 
@@ -15,6 +17,7 @@
 typedef enum 
 {
     TORRENT_DOWNLOADING,
+    TORRENT_NEEDS_CHECK,
     TORRENT_CHECKING,
     TORRENT_SEEDING,
     TORRENT_PAUSED,
@@ -119,6 +122,7 @@ typedef struct {
     uint8_t info_hash[20];
     uint8_t *pieces;
     size_t pieces_string_length;
+    uint64_t pieces_count;
     uint64_t total_size;
 
     TR_tracker *trackers;
@@ -148,7 +152,7 @@ typedef struct {
 
     int       interval;
 
-
+    uint32_t  ip;
 } NET_tracker;
 
 typedef struct
@@ -190,18 +194,16 @@ typedef struct {
     char            *download_path;
     char            *torrent_file_path;
 
-    int             tcp_socket;
     uint64_t        downloaded;
     uint64_t        uploaded;
 
-    TR_track_state  track_state;
     time_t          next_announce;
 
     TR_swarm        *swarm;
 } TR_torrent;
 
 typedef struct {
-    uint32_t    transction_id;
+    uint32_t    transaction_id;
     time_t      sent_at;
 
     TR_torrent  *torrent;
@@ -221,5 +223,46 @@ typedef struct {
     int          torrents_count;
     Arena        *main_arena;
 } CL_session;
+
+
+typedef void (*task_fn)(void *arg);
+
+typedef struct
+{
+    task_fn fn;
+    void    *arg;
+} CL_task;
+
+typedef struct
+{
+    pthread_t   threads[4];
+    CL_task     queue[64];
+
+    int         head;
+    int         tail;
+    int         count;
+
+    pthread_mutex_t lock;
+    pthread_cond_t  cond;
+
+    bool stop;
+} CL_threadpool;
+
+typedef struct
+{
+    CL_session    *session;
+    CL_threadpool *pool;
+
+    int         epollfd;
+    int         client_timerfd;
+    int         peer_timerfd;
+    int         notify_pipe[2];
+
+    UDP_request udp_requests[128];
+    int         udp_requests_count;
+
+    int         udp_socket;
+} EV_loop;
+
 
 #endif 

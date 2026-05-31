@@ -86,11 +86,9 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
 {
     int i;
 
-    Arena torrent_arena = arena_create(MB(10));
+    Arena torrent_arena = arena_create(MB(100));
     TR_torrent *torrent = arena_push_struct(&torrent_arena, TR_torrent);
-    torrent->arena = torrent_arena;
 
-    torrent->info = arena_push_struct(&torrent_arena, TR_info);
     torrent->info = BEN_pairs_to_TR_info(&torrent_arena, pair);
     if (!torrent->info)
     {
@@ -101,12 +99,9 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
 
     torrent->downloaded = 0;
     torrent->uploaded = 0;
-    torrent->tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (torrent->tcp_socket == -1)
-    {
-        arena_destroy(&torrent_arena);
-        return NULL;
-    }
+
+    torrent->swarm = arena_push_struct(&torrent_arena, TR_swarm);
+    init_TR_swarm(torrent->swarm, &torrent_arena);
 
     torrent->tracker_count = torrent->info->trackers_count;
 
@@ -121,9 +116,23 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
             return NULL;
         }
     }
+    torrent->arena = torrent_arena;
+    torrent->state = TORRENT_DOWNLOADING;
 
     return torrent;
     
+}
+
+void init_TR_swarm(TR_swarm *swarm, Arena *arena)
+{
+    for (int i = 0; i < 200; i++)
+        swarm->peer_pool[i] = arena_push_struct(arena, TR_peer);
+
+    for (int i = 0; i < 50; i++)
+        swarm->peers[i] = arena_push_struct(arena, TR_peer);
+
+    swarm->pool_count  = 0;
+    swarm->peers_count = 0;
 }
 
 void init_saved_torrents(CL_session *session)
@@ -201,7 +210,7 @@ void CMD_add_init(CL_session *session, char *path)
         }
     }
     arena_destroy(&scratch_arena);
-    tmp_torrent->state = TORRENT_DOWNLOADING;
+    tmp_torrent->state = TORRENT_NEEDS_CHECK;
     tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena, path);
     
 

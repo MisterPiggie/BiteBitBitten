@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include "../arena/arena.h"
 
 bool reserved_table[256] = {
@@ -544,6 +543,7 @@ void fill_in_calculated_field_in_TR_info(TR_info *info)
     }
 
     info->total_size = total_size;
+    info->pieces_count = info->pieces_string_length / 20;
 }
 
 bool sanitize_file_BEN_string(BEN_string *path)

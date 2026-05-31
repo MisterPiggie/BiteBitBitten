@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <sys/random.h>
+#include "../threads/pool_thread.h"
 
 
 void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
@@ -13,9 +14,15 @@ void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
     NET_tracker *tracker = &tr->tracks[tr->active_tracker_idx];
     switch (tracker->state)
     {
+        case TRACKER_NOT_RESOLVED:
+            ANN_resolve_tracker(tr, loop);
+            tracker->state = TRACKER_RESOLVING;
+            break;
+        case TRACKER_RESOLVING:
+            break;
         case TRACKER_IDLE:
             ANN_make_announce_req(tr, loop);
-            tr->track_state = TRACKER_ANNOUNCING;
+            tracker->state = TRACKER_ANNOUNCING;
             tracker->announce_sent_at = time(NULL);
             break;
         case TRACKER_ANNOUNCING:
@@ -30,7 +37,7 @@ void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
             if (time(NULL) - tracker->last_announce > tracker->interval)
             {
                 ANN_make_announce_req(tr, loop);
-                tr->track_state = TRACKER_ANNOUNCING;
+                tracker->state = TRACKER_ANNOUNCING;
                 tracker->announce_sent_at = time(NULL);
             }
             break;
@@ -41,6 +48,16 @@ void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
     }
 }
 
+void ANN_resolve_tracker(TR_torrent *tr, EV_loop *loop)
+{
+    DNS_resolve_args args = { 
+        .torrent = tr,
+        .tracker = &tr->tracks[tr->active_tracker_idx],
+        .pipefd = loop->notify_pipe[1],
+    };
+
+    threadpool_push(loop->pool, task_resolve_DNS, &args);
+}
 
 void ANN_make_announce_req(TR_torrent *tr, EV_loop *loop)
 {
@@ -48,13 +65,13 @@ void ANN_make_announce_req(TR_torrent *tr, EV_loop *loop)
     if (strcmp(tracker->schema, "https") == 0 ||
         strcmp(tracker->schema, "http") == 0)
     {
-        make_HTTP_announce(tr, loop->session->peer_id);
+        make_HTTP_announce(tr, loop);
         return;
     }
 
     if (strcmp(tracker->schema, "udp") == 0)
     {
-        make_UDP_connect(tr, loop->session->peer_id);
+        make_UDP_connect(tr, loop);
         return;
     }
 
@@ -154,10 +171,54 @@ int tracker_string_to_NET_tracker(Arena *arena, char *url, NET_tracker *track)
 
     path_start = strchr(colon + 1, '/');
     track->path = path_start ? arena_push_str(arena, path_start) : arena_push_str(arena, "/");
-   
-    track->state =TRACKER_NOT_RESOLVED;
+
+    if (strcmp(track->schema, "udp") == 0)
+        track->state = TRACKER_NOT_RESOLVED;  
+
+    else if (strcmp(track->schema, "http")  == 0 ||
+            strcmp(track->schema, "https") == 0)
+        track->state = TRACKER_IDLE;        
+
+    track->ip = 0;
+
+
 
 
     return 0;
 }
 
+void parse_peers(uint8_t *peers, int peers_length, TR_torrent *tr)
+{
+    int i;
+    uint32_t ip;
+    uint16_t port;
+
+    if (peers_length < 6) 
+        return;
+
+    for (i = 0 ; i + 6 <= peers_length; i += 6)
+    {
+        if (tr->swarm->pool_count >= 200)
+            continue;
+        ip = *(uint32_t *)(peers + i);
+        port = ntohs(*(uint16_t *)(peers + i + 4));
+
+        if (port == 0)
+            continue;
+
+        peer_pool_add(tr, ip, port);
+    }
+}
+
+void peer_pool_add(TR_torrent *tr, uint32_t ip, uint16_t port)
+{
+    for (int i = 0; i < tr->swarm->pool_count; i++)
+        if (tr->swarm->peer_pool[i]->ip == ip &&
+            tr->swarm->peer_pool[i]->port == port)
+            return;
+
+    TR_peer *peer = tr->swarm->peer_pool[tr->swarm->pool_count++]; 
+    peer->ip = ip;
+    peer->port = port;
+    peer->peer_state = NOT_CONNECTED;
+}

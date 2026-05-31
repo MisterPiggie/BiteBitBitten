@@ -17,6 +17,9 @@ void CL_client_tick(EV_loop  *loop)
                 ANN_refill_peers(loop, tr);
                 break;
 
+            case TORRENT_NEEDS_CHECK:
+                // FL_check_torrent(loop,tr);
+                break;
             case TORRENT_CHECKING:
                 break;
             case TORRENT_SEEDING:

@@ -1,12 +1,17 @@
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include "event_loop.h"
 
-void init_EV_loop(EV_loop *loop, CL_session *session)
+void init_EV_loop(EV_loop *loop, CL_session *session, CL_threadpool *pool)
 {
     loop->session = session;
+    loop->pool = pool;
     loop->epollfd = epoll_create1(0);
+
+    pipe(loop->notify_pipe);
+    epoll_add(loop->epollfd, loop->notify_pipe[0], EPOLLIN);
      
     loop->client_timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 
@@ -34,7 +39,7 @@ void epoll_add(int epollfd, int fd, uint32_t events)
     struct epoll_event ev =
     {
         .events = events,
-        .data.fd = epollfd,
+        .data.fd = fd,
     };
     epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev);
 }
