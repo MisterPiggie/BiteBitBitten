@@ -12,6 +12,7 @@
 
 void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
 {
+    int i, j=0;
     NET_tracker *tracker = &tr->tracks[tr->active_tracker_idx];
     switch (tracker->state)
     {
@@ -30,6 +31,14 @@ void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
             if (time(NULL) - tracker->announce_sent_at > 5)
             {
                 tracker->state = TRACKER_FAILED;
+                for (i = 0; i< loop->udp_requests_count; i++)
+                    if (loop->udp_requests[i].tracker == tracker)
+                    {
+                         loop->udp_requests[i] = loop->udp_requests[loop->udp_requests_count - j];
+                     j++;
+}
+loop->udp_requests_count -= j;
+     
                 if (++tr->active_tracker_idx >= tr->tracker_count)
                     tr->state = TORRENT_FAILED;
             }
