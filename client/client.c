@@ -4,7 +4,7 @@
 
 void CL_client_tick(EV_loop  *loop)
 {
-    int i;
+    int i, j;
     for (i = 0; i < loop->session->torrents_count; i++)
     {
         TR_torrent *tr = loop->session->torrents[i];
@@ -28,7 +28,11 @@ void CL_client_tick(EV_loop  *loop)
             case TORRENT_PAUSED:
                 break;
             case TORRENT_FAILED:
-                break;
+                for (j = 0; j < tr->tracker_count; j++)
+                if (strcmp(tr->tracks[j].schema, "udp") == 0)
+                    tr->tracks[j]->state = TRACKER_NOT_RESOLVED;
+       else if (strcmp(tr->tracks[j].schema, "http") || strcmp(tr->tracks[j].schema, "https"))
+ tr->tracks[j]->state = TRACKER_IDLE;
         }
     }
 }
