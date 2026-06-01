@@ -13,7 +13,6 @@
 void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
 {
     NET_tracker *tracker = &tr->tracks[tr->active_tracker_idx];
-    printf("tick: tracker state = %d\n", tracker->state);
     switch (tracker->state)
     {
         case TRACKER_NOT_RESOLVED:
@@ -28,7 +27,7 @@ void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
             tracker->announce_sent_at = time(NULL);
             break;
         case TRACKER_ANNOUNCING:
-            if (time(NULL) - tracker->announce_sent_at > 15)
+            if (time(NULL) - tracker->announce_sent_at > 5)
             {
                 tracker->state = TRACKER_FAILED;
                 if (++tr->active_tracker_idx >= tr->tracker_count)

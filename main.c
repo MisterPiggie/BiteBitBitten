@@ -46,12 +46,13 @@ int main(void) {
 
     struct epoll_event events[64];
 
+
     while (running) {
         n = epoll_wait(loop.epollfd, events, 64, -1);
         for (i = 0; i < n; i++)
         {
             int fd = events[i].data.fd;
-
+            
             if (fd == STDIN_FILENO)
             {
                 if (!fgets(line, sizeof(line), stdin))

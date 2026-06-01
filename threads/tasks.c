@@ -44,7 +44,6 @@ void task_resolve_DNS(void *arg)
 
 void notify_pipe_readable(EV_loop *loop)
 {
-    printf("pipe readable\n");
     notify_result result;
     read(loop->notify_pipe[0], &result, sizeof(result));
 

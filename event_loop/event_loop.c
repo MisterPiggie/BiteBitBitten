@@ -1,4 +1,5 @@
 #include <sys/epoll.h>
+#include <netinet/in.h>
 #include <sys/timerfd.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -29,6 +30,14 @@ void init_EV_loop(EV_loop *loop, CL_session *session, CL_threadpool *pool)
     epoll_add(loop->epollfd, loop->peer_timerfd, EPOLLIN);
 
     loop->udp_socket = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
+
+    struct sockaddr_in addr = {
+        .sin_family      = AF_INET,
+        .sin_addr.s_addr = INADDR_ANY,
+        .sin_port        = htons(0),  // OS picks port
+    };
+    if (bind(loop->udp_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        perror("bind udp");
     epoll_add(loop->epollfd, loop->udp_socket, EPOLLIN);
 
     return;
