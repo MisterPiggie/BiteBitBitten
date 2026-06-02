@@ -5,14 +5,18 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 #include <time.h>
 #include <sys/random.h>
+#include <sys/epoll.h>
 #include "../threads/pool_thread.h"
+#include "../event_loop/event_loop.h"
 
 
 void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
 {
-    int i, j=0;
+    int i;
+
     NET_tracker *tracker = &tr->tracks[tr->active_tracker_idx];
     switch (tracker->state)
     {
@@ -34,11 +38,10 @@ void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
                 for (i = 0; i< loop->udp_requests_count; i++)
                     if (loop->udp_requests[i].tracker == tracker)
                     {
-                         loop->udp_requests[i] = loop->udp_requests[loop->udp_requests_count - j];
-                     j++;
-}
-loop->udp_requests_count -= j;
-     
+                        loop->udp_requests[i] = loop->udp_requests[--loop->udp_requests_count];
+                        i--;
+                    }
+
                 if (++tr->active_tracker_idx >= tr->tracker_count)
                     tr->state = TORRENT_FAILED;
             }
@@ -233,4 +236,65 @@ void peer_pool_add(TR_torrent *tr, uint32_t ip, uint16_t port)
     peer->port = port;
     peer->peer_state = NOT_CONNECTED;
     printf("Peer: %lu:%u\n", (unsigned long) ip, port);
+}
+
+void ANN_refill_peers(EV_loop *loop, TR_torrent *tr)
+{
+    TR_peer *peer;
+    while (tr->swarm->peers_count < 50 && tr->swarm->pool_count > 0)
+    {
+        peer = pick_peer(tr->swarm);
+        connect_to_peer(peer, loop, tr);
+    }
+}
+
+TR_peer *pick_peer(TR_swarm *swarm)
+{
+    int i;
+    TR_peer *peer;
+
+    for (i = 0; i < swarm->pool_count; i++)
+    {
+        peer = swarm->peer_pool[i];
+        if (peer->peer_state == CONNECTED)
+            continue;
+
+        if (time(NULL) - peer->last_tried < 300)
+            continue;
+
+        if (peer->failed_tries >= 3)
+        {
+            swarm->peer_pool[i] = swarm->peer_pool[--swarm->pool_count];
+            i--;
+            continue;
+        }
+
+        return peer;
+    }
+    
+    return peer;
+}
+
+void connect_to_peer(TR_peer *peer, EV_loop *loop, TR_torrent *tr)
+{
+    int ret;
+    int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    peer->sock = fd;
+
+
+    struct sockaddr_in peer_addr = 
+    {
+        .sin_family = AF_INET,
+        .sin_addr.s_addr = peer->ip,
+        .sin_port = htons(peer->port),
+    };
+
+    ret = connect(fd, (struct sockaddr *)&peer_addr, sizeof(peer_addr));
+    if (ret < 0 && errno != EINPROGRESS)
+    {
+        close(fd);
+        return;
+    }
+
+    epoll_add(loop->epollfd, fd, EPOLLOUT);
 }

@@ -29,6 +29,7 @@ void HTTP_url_encode_hash(const uint8_t *hash_info, char *out);
 void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr);
 void ANN_refill_peers(EV_loop *loop, TR_torrent *tr);
 
+TR_peer *pick_peer(TR_swarm *swarm);
 void ANN_resolve_tracker(TR_torrent *tr, EV_loop *loop);
 void ANN_make_announce_req(TR_torrent *tr, EV_loop *loop);
 void make_HTTP_announce(TR_torrent *tr, EV_loop *loop);
@@ -37,6 +38,7 @@ void make_UDP_announce(TR_torrent *tr, EV_loop *loop);
 void UDP_readable(EV_loop *loop);
 void parse_peers(uint8_t *peers, int peers_length, TR_torrent *tr);
 void peer_pool_add(TR_torrent *tr, uint32_t ip, uint16_t port);
+void connect_to_peer(TR_peer *peer, EV_loop *loop, TR_torrent *tr);
 
 uint32_t get_random_u32(void);
 

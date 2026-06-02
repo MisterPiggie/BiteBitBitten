@@ -29,10 +29,12 @@ void CL_client_tick(EV_loop  *loop)
                 break;
             case TORRENT_FAILED:
                 for (j = 0; j < tr->tracker_count; j++)
-                if (strcmp(tr->tracks[j].schema, "udp") == 0)
-                    tr->tracks[j]->state = TRACKER_NOT_RESOLVED;
-       else if (strcmp(tr->tracks[j].schema, "http") || strcmp(tr->tracks[j].schema, "https"))
- tr->tracks[j]->state = TRACKER_IDLE;
+                    if (strcmp(tr->tracks[j].schema, "udp") == 0)
+                        tr->tracks[j].state = TRACKER_NOT_RESOLVED;
+                    else if (strcmp(tr->tracks[j].schema, "http") || strcmp(tr->tracks[j].schema, "https"))
+                        tr->tracks[j].state = TRACKER_IDLE;
+                tr->state = TORRENT_DOWNLOADING;
+                break;
         }
     }
 }
