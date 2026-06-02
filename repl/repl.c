@@ -94,6 +94,10 @@ void CMD_add(CL_session *session, int argc, char **argv)
     tmp_torrent->state = TORRENT_DOWNLOADING;
     arena_destroy(&scratch_arena);
     tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena,"%s/%s", session->torrent_dir_path, argv[1]);
+tmp_torrent->bitfield_length = (tmp_torrent->info->piece_count + 7)/8;
+tmp_torrent->bitfield = arena_push_array_zero(&tmp_torrent->arena, uint8_t, tmp_torrent->bitfield_length);
+
+
     
     if (!copy_torrent_file(argv[1], tmp_torrent->torrent_file_path))
     {
