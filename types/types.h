@@ -197,7 +197,8 @@ typedef struct {
     uint64_t        downloaded;
     uint64_t        uploaded;
 
-    time_t          next_announce;
+    uint8_t         *bitfield;
+    int             bitfield_length;
 
     TR_swarm        *swarm;
 } TR_torrent;
