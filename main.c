@@ -96,6 +96,14 @@ int main(void) {
             {
                 notify_pipe_readable(&loop);
                 continue;
+            } else
+            {
+                TR_peer_ctx *ctx = events[i].data.ptr;
+                if (events[i].events & EPOLLOUT)
+                    on_peer_connected(&loop, ctx);
+                else if (events[i].events & EPOLLIN)
+                    on_peer_readable(&loop, ctx);
+                break;
             }
         }
 

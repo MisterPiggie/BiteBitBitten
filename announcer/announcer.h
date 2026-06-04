@@ -55,3 +55,8 @@ int UDP_recv_connect_req(int sock, NET_tracker *track);
 int UDP_send_announce_req(CL_session *session, TR_torrent *torrent, UDP_request *req);
 UDP_request *construct_UDP_request(TR_torrent *torrent);
 int UDP_recv_announce_resp(int sock);
+void on_peer_connected(EV_loop *loop, TR_peer_ctx *context);
+void handle_handshake(EV_loop *loop, TR_peer *peer, TR_torrent *tr);
+void handle_message(EV_loop *loop, TR_peer *peer, TR_torrent *tr);
+void send_handshake(TR_peer *peer, TR_torrent *tr, uint8_t *peer_id);
+void on_peer_readable(EV_loop *loop, TR_peer_ctx *context);

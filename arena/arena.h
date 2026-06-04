@@ -2,6 +2,7 @@
 #define STB_ARENA_H
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <assert.h>
@@ -25,6 +26,7 @@ typedef struct
 
 Arena arena_create(size_t reserve_size);
 void *arena_push(Arena *a, size_t size);
+void *arena_push_zero(Arena *a, size_t size);
 char *arena_push_str(Arena *a, const char *cstr);
 char *arena_push_strf(Arena *a, const char *cstr, ...);
 char *arena_push_strn(Arena *a, const char *cstr, size_t n);
@@ -72,7 +74,6 @@ Arena arena_create(size_t reserve_size)
 
 void *arena_push(Arena *a, size_t size)
 {
-    size_t new_commit;
     size_t align = 16;
     size_t padding = (~a->used + 1) & (align -  1);
     size_t total = size + padding;
@@ -80,10 +81,9 @@ void *arena_push(Arena *a, size_t size)
 
     while (a->used + total > a->commited) 
     {
-        new_commit = a->commited + COMMIT_CHUNK;
-        assert(new_commit <= a->reserved && "Arena out of reserved space");
-        os_commit(a->memory, new_commit);
-        a->commited = new_commit;
+        assert(a->commited + COMMIT_CHUNK <= a->reserved && "Arena out of reserved space");
+        os_commit(a->memory + a->commited, COMMIT_CHUNK);
+        a->commited += COMMIT_CHUNK;
     }
 
     ptr = a->memory + a->used + padding;
@@ -95,7 +95,6 @@ void *arena_push(Arena *a, size_t size)
 
 void *arena_push_zero(Arena *a, size_t size)
 {
-    size_t new_commit;
     size_t align = 16;
     size_t padding = (~a->used + 1) & (align -  1);
     size_t total = size + padding;
@@ -103,10 +102,9 @@ void *arena_push_zero(Arena *a, size_t size)
 
     while (a->used + total > a->commited) 
     {
-        new_commit = a->commited + COMMIT_CHUNK;
-        assert(new_commit <= a->reserved && "Arena out of reserved space");
-        os_commit(a->memory, new_commit);
-        a->commited = new_commit;
+        assert(a->commited + COMMIT_CHUNK <= a->reserved && "Arena out of reserved space");
+        os_commit(a->memory + a->commited, COMMIT_CHUNK);
+        a->commited += COMMIT_CHUNK;
     }
 
     ptr = a->memory + a->used + padding;
@@ -135,14 +133,14 @@ void arena_destroy(Arena *a)
 char *arena_push_str(Arena *a, const char *cstr)
 {
     size_t len = strlen(cstr);
-    char *data = push_array(a, char, len+1);
+    char *data = arena_push_array(a, char, len+1);
     memcpy(data, cstr, len+1);
     return data;
 }
 
 char *arena_push_strn(Arena *a, const char *cstr, size_t n)
 {
-    char *data = push_array(a, char, n+1);
+    char *data = arena_push_array(a, char, n+1);
     memcpy(data, cstr, n);
     data[n] = '\0';
     return data;
@@ -152,10 +150,10 @@ char *arena_push_strf(Arena *a, const char *cstr, ...)
 {
     va_list args;
     va_start(args, cstr);
-    size_t len = vsnprintf(NULL, 0, fmt, args);
+    size_t len = vsnprintf(NULL, 0, cstr, args);
     va_end(args);
 
-    char *data = push_array(a, char, len+1);
+    char *data = arena_push_array(a, char, len+1);
     va_start(args, cstr);
     vsnprintf(data, len + 1, cstr, args);
     va_end(args);

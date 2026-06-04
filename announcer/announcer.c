@@ -296,5 +296,171 @@ void connect_to_peer(TR_peer *peer, EV_loop *loop, TR_torrent *tr)
         return;
     }
 
-    epoll_add(loop->epollfd, fd, EPOLLOUT);
+    peer->context.peer = peer;
+    peer->context.tr = tr;
+    peer->peer_state = CONNECTING;
+
+    struct epoll_event ev = {
+        .events   = EPOLLOUT,
+        .data.ptr = &peer->context,  
+    };
+
+    epoll_ctl(loop->epollfd, EPOLL_CTL_ADD, peer->sock, &ev);
+}
+
+void on_peer_connected(EV_loop *loop, TR_peer_ctx *context)
+{
+    TR_peer *peer  = context->peer;
+    TR_torrent *torrent  = context->tr;
+    int err;
+    socklen_t len = sizeof(err);
+
+    getsockopt(peer->sock, SOL_SOCKET, SO_ERROR, &err, &len);
+
+    if (err != 0)
+    {
+        peer->peer_state = NOT_CONNECTED;
+        peer->failed_tries++;
+        epoll_ctl(loop->epollfd, EPOLL_CTL_DEL, peer->sock, NULL);
+        close(peer->sock);
+        peer->sock = -1;
+        return;
+    }
+
+    send_handshake(peer, torrent, loop->session->peer_id);
+
+    struct epoll_event ev =
+    {
+        .events = EPOLLIN,
+        .data.ptr = &peer->context,
+    };
+
+    epoll_ctl(loop->epollfd, EPOLL_CTL_MOD, peer->sock, &ev);
+
+    peer->peer_state = HANDSHAKING;
+}
+void on_peer_readable(EV_loop *loop, TR_peer_ctx *context)
+{
+    TR_peer *peer  = context->peer;
+    TR_torrent *torrent  = context->tr;
+
+    switch (peer->peer_state)
+    {
+        case HANDSHAKING:
+            handle_handshake(loop, peer, torrent);
+            break;
+        case CONNECTED:
+            handle_message(loop, peer, torrent);
+            break;
+    }
+}
+
+void handle_handshake(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
+{
+    uint8_t handshake[68];
+    ssize_t n = recv(peer->sock, handshake, 68, 0);
+
+    if (n != 68)
+    {
+        disconnect_peer(loop, peer);
+        return;
+    }
+
+    if (handshake[0] != 19 ||
+        memcmp(handshake + 1, "BitTorrent protocol", 19) != 0)
+    {
+        disconnect_peer(loop, peer);
+        return;
+    }
+
+    if (memcmp(handshake + 28, tr->info->info_hash, 20) != 0)
+    {
+        disconnect_peer(loop, peer);
+        return;
+    }
+
+    memcpy(loop->session->peer_id, handshake + 48, 20);
+
+    peer->peer_state = CONNECTED;
+
+}
+
+void handle_message(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
+{
+    uint32_t msg_len;
+    recv(peer->sock, &msg_len, 4, 0);
+    msg_len = ntohl(msg_len);
+
+    if (msg_len == 0)
+        return;
+
+    uint8_t msg_id;
+    recv(peer->sock, &msg_id, 1, 0);
+
+    switch (msg_id)
+    {
+        case 0:  
+            peer->bitmask_state |= PEER_CHOKING_US;
+            break;
+
+        case 1:  
+            peer->bitmask_state &= ~PEER_CHOKING_US;
+            request_pieces(peer, tr);
+            break;
+
+        case 2:  
+            peer->bitmask_state |= PEER_INTERESTED_IN_US;
+            break;
+
+        case 3:  
+            peer->bitmask_state &= ~PEER_INTERESTED_IN_US;
+            break;
+
+        case 4:  
+        {
+            uint32_t piece_index;
+            recv(peer->sock, &piece_index, 4, 0);
+            piece_index = ntohl(piece_index);
+            peer_set_piece(peer, piece_index);
+            break;
+        }
+
+        case 5:  
+        {
+            int bitfield_len = msg_len - 1;
+            recv(peer->sock, peer->bitfield, bitfield_len, 0);
+            send_interested(peer);
+            break;
+        }
+
+        case 7:  
+            handle_piece(loop, peer, tr, msg_len);
+            break;
+
+        default:
+        {
+            uint8_t tmp[512];
+            int remaining = msg_len - 1;
+            while (remaining > 0)
+            {
+                int n = recv(peer->sock, tmp,
+                             remaining < 512 ? remaining : 512, 0);
+                remaining -= n;
+            }
+            break;
+        }
+    }
+}
+
+void send_handshake(TR_peer *peer, TR_torrent *tr, uint8_t *peer_id)
+{
+    uint8_t handshake[68];
+
+    handshake[0] = 19;
+    memcpy(handshake + 1,  "BitTorrent protocol", 19);
+    memset(handshake + 20, 0, 8);                        
+    memcpy(handshake + 28, tr->info->info_hash, 20);  
+    memcpy(handshake + 48, peer_id, 20);
+
+    send(peer->sock, handshake, 68, 0);
 }

@@ -26,7 +26,9 @@ typedef enum
 
 typedef enum {
     NOT_CONNECTED,
+    CONNECTING,
     CONNECTED,
+    HANDSHAKING,
     BANNED,
 } TR_peer_state;
 
@@ -155,10 +157,21 @@ typedef struct {
     uint32_t  ip;
 } NET_tracker;
 
-typedef struct
+
+
+typedef struct TR_peer    TR_peer;
+typedef struct TR_torrent TR_torrent;
+
+typedef struct 
+{
+    TR_peer *peer;
+    TR_torrent *tr;
+}TR_peer_ctx;
+
+struct TR_peer
 {
     uint32_t       ip;
-    uint8_t        port;  
+    uint16_t        port;  
 
     int            sock;
 
@@ -170,7 +183,9 @@ typedef struct
 
     time_t         last_tried;
     int            failed_tries;
-} TR_peer;
+
+    TR_peer_ctx    context;
+}; 
 
 
 typedef struct 
@@ -183,7 +198,7 @@ typedef struct
 } TR_swarm;
 
 
-typedef struct {
+struct TR_torrent{
     Arena       arena;
     TR_state    state;
 
@@ -198,10 +213,11 @@ typedef struct {
     uint64_t        uploaded;
 
     uint8_t         *bitfield;
-    int             bitfield_length;
+    size_t          bitfield_length;
 
     TR_swarm        *swarm;
-} TR_torrent;
+};
+
 
 typedef struct {
     uint32_t    transaction_id;
