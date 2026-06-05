@@ -25,6 +25,7 @@ typedef struct
 
 Arena arena_create(size_t reserve_size);
 void *arena_push(Arena *a, size_t size);
+void *arena_push_zero(Arena *a, size_t size);
 char *arena_push_str(Arena *a, const char *cstr);
 char *arena_push_strf(Arena *a, const char *cstr, ...);
 char *arena_push_strn(Arena *a, const char *cstr, size_t n);
