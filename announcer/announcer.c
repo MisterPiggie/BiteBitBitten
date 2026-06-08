@@ -352,6 +352,8 @@ void on_peer_readable(EV_loop *loop, TR_peer_ctx *context)
         case CONNECTED:
             handle_message(loop, peer, torrent);
             break;
+        case BANNED: case NOT_CONNECTED: case CONNECTING:
+            break;
     }
 }
 
@@ -366,8 +368,7 @@ void handle_handshake(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
         return;
     }
 
-    if (handshake[0] != 19 ||
-        memcmp(handshake + 1, "BitTorrent protocol", 19) != 0)
+    if (handshake[0] != 19 || memcmp(handshake + 1, "BitTorrent protocol", 19) != 0)
     {
         disconnect_peer(loop, peer);
         return;
@@ -463,4 +464,29 @@ void send_handshake(TR_peer *peer, TR_torrent *tr, uint8_t *peer_id)
     memcpy(handshake + 48, peer_id, 20);
 
     send(peer->sock, handshake, 68, 0);
+}
+
+void disconnect_peer(EV_loop *loop, TR_peer *peer)
+{
+    TR_swarm *swarm = peer->context.tr->swarm;
+    int i;
+
+    epoll_ctl(loop->epollfd, EPOLL_CTL_DEL, peer->sock, NULL);
+    close(peer->sock);
+
+    peer->sock = -1;
+    peer->peer_state = NOT_CONNECTED;
+    peer->failed_tries++;
+
+
+    for (i = 0; i < swarm->peers_count; i++)
+    {
+        if (swarm->peers[i] == peer)
+        {
+            swarm->peers[i] = swarm->peers[--swarm->peers_count];
+            break;
+        }
+    }
+    
+    return;
 }

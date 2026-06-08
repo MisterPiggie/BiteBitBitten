@@ -171,7 +171,7 @@ typedef struct
 struct TR_peer
 {
     uint32_t       ip;
-    uint16_t        port;  
+    uint16_t       port;  
 
     int            sock;
 
@@ -213,7 +213,7 @@ struct TR_torrent{
     uint64_t        uploaded;
 
     uint8_t         *bitfield;
-    size_t          bitfield_length;
+    uint32_t        bitfield_length;
 
     TR_swarm        *swarm;
 };

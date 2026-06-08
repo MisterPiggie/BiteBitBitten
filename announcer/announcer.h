@@ -60,3 +60,4 @@ void handle_handshake(EV_loop *loop, TR_peer *peer, TR_torrent *tr);
 void handle_message(EV_loop *loop, TR_peer *peer, TR_torrent *tr);
 void send_handshake(TR_peer *peer, TR_torrent *tr, uint8_t *peer_id);
 void on_peer_readable(EV_loop *loop, TR_peer_ctx *context);
+void disconnect_peer(EV_loop *loop, TR_peer *peer);
