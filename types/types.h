@@ -214,6 +214,7 @@ struct TR_torrent{
 
     uint8_t         *bitfield;
     uint32_t        bitfield_length;
+    uint8_t         requested_pieces;
 
     TR_swarm        *swarm;
 };
