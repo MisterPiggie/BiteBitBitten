@@ -10,7 +10,6 @@
 #include <sys/random.h>
 #include <sys/epoll.h>
 #include "../threads/pool_thread.h"
-#include "../event_loop/event_loop.h"
 
 
 void ANN_announcer_tick(EV_loop *loop, TR_torrent *tr)
@@ -490,3 +489,10 @@ void disconnect_peer(EV_loop *loop, TR_peer *peer)
     
     return;
 }
+
+void peer_set_piece(TR_peer *peer, uint64_t piece_idx)
+{
+    peer->bitfield[piece_idx / 8] |= (1 << (7 - piece_idx % 8));
+}
+
+void request_pieces

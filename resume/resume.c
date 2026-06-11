@@ -1,5 +1,6 @@
 #include "resume.h"
-#include <strings.h>
+#include <string.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -84,15 +85,15 @@ bool read_resume_file(TR_torrent *tr, char *resume_file_path)
     if (fd == -1)
         return false;
 
-    if (read(fd, &path_len, 4) != 4)
+    if (!read_all(fd, &path_len, 4))
         goto fail;
      
-    if (read(fd, tr->download_path, path_len) != path_len)
+    if (!read_all(fd, tr->download_path, path_len))
         goto fail;
 
-    if (read(fd, &tr->bitfield_length, 4) != 4)
+    if (!read_all(fd, &tr->bitfield_length, 4))
         goto fail;
-    if (read(fd, tr->bitfield, tr->bitfield_length) != tr->bitfield_length)
+    if (!read_all(fd, tr->bitfield, tr->bitfield_length)) 
         goto fail;
 
     close(fd);
@@ -104,3 +105,19 @@ fail:
     return false;
 }
 
+bool read_all(int fd, void *buf, size_t len)
+{
+    char *p = buf;
+    ssize_t n;
+
+    while (len > 0)
+    {
+        n = read(fd, p, len);
+        if (n <= 0)
+            return false;
+
+        p += n;
+        len -= n;
+    }
+    return true;
+}
