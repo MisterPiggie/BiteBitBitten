@@ -11,4 +11,4 @@ void CMD_add_init(CL_session *session, char *path);
 const char *get_home_dir_path(void);
 
 TR_torrent *init_TR_torrent(BEN_pair *pair);
-void init_TR_swarm(TR_swarm *swarm, Arena *arena);
+void init_TR_swarm(TR_swarm *swarm, Arena *arena, int pieces_count, uint32_t piece_length);

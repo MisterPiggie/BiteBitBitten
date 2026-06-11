@@ -184,6 +184,11 @@ struct TR_peer
     time_t         last_tried;
     int            failed_tries;
 
+    int            current_piece;
+    int            blocks_received;
+
+    uint8_t        *piece_buf;
+
     TR_peer_ctx    context;
 }; 
 
@@ -195,6 +200,12 @@ typedef struct
 
     TR_peer *peers[50];
     int     peers_count; 
+
+    uint8_t *bitfield_slab;
+    int     bytes_count;
+
+    uint8_t *piece_buf_slab;
+    uint32_t piece_length;
 } TR_swarm;
 
 
@@ -214,7 +225,7 @@ struct TR_torrent{
 
     uint8_t         *bitfield;
     uint32_t        bitfield_length;
-    uint8_t         requested_pieces;
+    uint8_t         *requested_pieces;
 
     TR_swarm        *swarm;
 };

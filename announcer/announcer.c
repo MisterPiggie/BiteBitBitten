@@ -311,6 +311,7 @@ void on_peer_connected(EV_loop *loop, TR_peer_ctx *context)
 {
     TR_peer *peer  = context->peer;
     TR_torrent *torrent  = context->tr;
+    int idx;
     int err;
     socklen_t len = sizeof(err);
 
@@ -326,6 +327,14 @@ void on_peer_connected(EV_loop *loop, TR_peer_ctx *context)
         return;
     }
 
+    idx = torrent->swarm->peers_count;
+    peer->bitfield = (torrent->swarm->bitfield_slab + torrent->swarm->bytes_count * idx);
+    peer->piece_buf = (torrent->swarm->piece_buf_slab + torrent->info->piece_length * idx);
+
+    torrent->swarm->peers[idx] = peer;
+    torrent->swarm->peers_count++;
+
+    peer->peer_state = HANDSHAKING;
     send_handshake(peer, torrent, loop->session->peer_id);
 
     struct epoll_event ev =
@@ -335,9 +344,8 @@ void on_peer_connected(EV_loop *loop, TR_peer_ctx *context)
     };
 
     epoll_ctl(loop->epollfd, EPOLL_CTL_MOD, peer->sock, &ev);
-
-    peer->peer_state = HANDSHAKING;
 }
+
 void on_peer_readable(EV_loop *loop, TR_peer_ctx *context)
 {
     TR_peer *peer  = context->peer;
@@ -405,7 +413,7 @@ void handle_message(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
 
         case 1:  
             peer->bitmask_state &= ~PEER_CHOKING_US;
-            request_pieces(peer, tr);
+            assign_piece_to_peer(peer, tr);
             break;
 
         case 2:  
@@ -474,8 +482,13 @@ void disconnect_peer(EV_loop *loop, TR_peer *peer)
     close(peer->sock);
 
     peer->sock = -1;
+    peer->current_piece = -1;
+    peer->blocks_received = 0;
     peer->peer_state = NOT_CONNECTED;
     peer->failed_tries++;
+
+    memset(peer->bitfield,  0, swarm->bytes_count);
+    memset(peer->piece_buf, 0, swarm->piece_length);
 
 
     for (i = 0; i < swarm->peers_count; i++)
@@ -495,4 +508,126 @@ void peer_set_piece(TR_peer *peer, uint64_t piece_idx)
     peer->bitfield[piece_idx / 8] |= (1 << (7 - piece_idx % 8));
 }
 
-void request_pieces
+
+void assign_piece_to_peer(TR_peer *peer, TR_torrent *torrent)
+{
+    for (int i = 0; i < torrent->info->pieces_count; i++)
+    {
+        if (torrent->bitfield[i / 8] & (1 << (7 - i % 8)))
+            continue;
+        if (torrent->requested_pieces[i / 8] & (1 << (7 - i % 8)))
+            continue;
+        if (!(peer->bitfield[i / 8] & (1 << (7 - i % 8))))
+            continue;
+
+        torrent->requested_pieces[i / 8] |= (1 << (7 - i % 8));
+        peer->current_piece          = i;
+        peer->blocks_received        = 0;
+
+        request_all_blocks(peer, torrent, i);
+        return;
+    }
+}
+
+void request_all_blocks(TR_peer *peer, TR_torrent *torrent, int piece_idx)
+{
+    uint32_t piece_size;
+    uint32_t offset;
+    uint32_t block_len;
+
+    if (piece_idx == torrent->info->pieces_count - 1)
+        piece_size = torrent->info->total_size % torrent->info->piece_length;
+    else
+        piece_size = torrent->info->piece_length;
+
+    for (offset = 0; offset < piece_size; offset += BLOCK_SIZE)
+    {
+        block_len = piece_size - offset;
+        if (block_len > BLOCK_SIZE)
+            block_len = BLOCK_SIZE;
+
+        send_request(peer, piece_idx, offset, block_len);
+    }
+}
+
+void send_request(TR_peer *peer, uint32_t piece_idx, uint32_t offset, uint32_t length)
+{
+    uint8_t buf[17];
+
+    *(uint32_t *)(buf)      = htonl(13);         
+    *(uint8_t  *)(buf + 4)  = 6;                 
+    *(uint32_t *)(buf + 5)  = htonl(piece_idx);
+    *(uint32_t *)(buf + 9)  = htonl(offset);
+    *(uint32_t *)(buf + 13) = htonl(length);
+
+    send(peer->sock, buf, 17, 0);
+}
+
+void send_interested(TR_peer *peer)
+{
+    uint8_t buf[5];
+
+    *(uint32_t *)(buf + 0) = htonl(1);  
+    *(uint8_t  *)(buf + 4) = 2;         
+
+    send(peer->sock, buf, 5, 0);
+}
+
+void handle_piece(EV_loop *loop, TR_peer *peer, TR_torrent *tr, uint32_t msg_len)
+{
+    uint32_t piece_idx;
+    uint32_t offset;
+    uint32_t block_len = msg_len - 9;  
+    uint8_t tmp[BLOCK_SIZE];
+    uint32_t block_idx;
+
+    recv(peer->sock, &piece_idx, 4, MSG_WAITALL);
+    recv(peer->sock, &offset,    4, MSG_WAITALL);
+
+    piece_idx = ntohl(piece_idx);
+    offset    = ntohl(offset);
+
+    if (piece_idx != (uint32_t)peer->current_piece)
+    {
+        recv(peer->sock, tmp, block_len, MSG_WAITALL);
+        return;
+    }
+
+    recv(peer->sock, peer->piece_buf + offset, block_len, MSG_WAITALL);
+
+    block_idx = offset / BLOCK_SIZE;
+    peer->blocks_received |= (1 << block_idx);
+
+    uint32_t piece_size = (piece_idx == (uint32_t)tr->info->pieces_count - 1)
+        ? tr->info->total_size % tr->info->piece_length
+        : tr->info->piece_length;
+
+    uint32_t total_blocks = (piece_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    uint32_t all_received = (1 << total_blocks) - 1;
+
+    if (peer->blocks_received == all_received)
+    {
+        piece_task *task = arena_push_struct(&tr->arena, piece_task);
+        task->torrent   = tr;
+        task->peer      = peer;
+        task->piece_idx = piece_idx;
+        task->data_len  = piece_size;
+        task->pipefd    = loop->notify_pipe[1];
+        memcpy(task->data, peer->piece_buf, piece_size);
+
+        threadpool_push(loop->pool, task_sha1_verify, task);
+
+        peer->current_piece   = -1;
+        peer->blocks_received = 0;}
+}
+
+void send_have(TR_peer *peer, uint32_t piece_idx)
+{
+    uint8_t buf[9];
+
+    *(uint32_t *)(buf + 0) = htonl(5);           
+    *(uint8_t  *)(buf + 4) = 4;                 
+    *(uint32_t *)(buf + 5) = htonl(piece_idx);
+
+    send(peer->sock, buf, 9, 0);
+}

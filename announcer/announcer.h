@@ -5,6 +5,7 @@
 
 #define  DEFAULT_PORT 6881
 #define UDP_MAGIC_NUMBER 0x41727101980
+#define BLOCK_SIZE (16 * 1024)
 
 
 static const char charset[] = "abcdefghijklmnopqrstuvwxyz"
@@ -62,3 +63,9 @@ void send_handshake(TR_peer *peer, TR_torrent *tr, uint8_t *peer_id);
 void on_peer_readable(EV_loop *loop, TR_peer_ctx *context);
 void disconnect_peer(EV_loop *loop, TR_peer *peer);
 void peer_set_piece(TR_peer *peer, uint64_t piece_idx);
+void request_all_blocks(TR_peer *peer, TR_torrent *torrent, int piece_idx);
+void assign_piece_to_peer(TR_peer *peer, TR_torrent *torrent);
+void send_request(TR_peer *peer, uint32_t piece_idx, uint32_t offset, uint32_t length);
+void send_interested(TR_peer *peer);
+void handle_piece(EV_loop *loop, TR_peer *peer, TR_torrent *tr, uint32_t msg_len);
+void send_have(TR_peer *peer, uint32_t piece_idx);

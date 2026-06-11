@@ -2,6 +2,7 @@
 #define STB_ARENA_H
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <assert.h>
@@ -136,7 +137,7 @@ void arena_destroy(Arena *a)
 char *arena_push_str(Arena *a, const char *cstr)
 {
     size_t len = strlen(cstr);
-    char *data = push_array(a, char, len+1);
+    char *data = arena_push_array(a, char, len+1);
     memcpy(data, cstr, len+1);
     return data;
 }
@@ -156,7 +157,7 @@ char *arena_push_strf(Arena *a, const char *cstr, ...)
     size_t len = vsnprintf(NULL, 0, cstr, args);
     va_end(args);
 
-    char *data = aren_push_array(a, char, len+1);
+    char *data = arena_push_array(a, char, len+1);
     va_start(args, cstr);
     vsnprintf(data, len + 1, cstr, args);
     va_end(args);

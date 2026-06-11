@@ -101,7 +101,7 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
     torrent->uploaded = 0;
 
     torrent->swarm = arena_push_struct(&torrent_arena, TR_swarm);
-    init_TR_swarm(torrent->swarm, &torrent_arena);
+    init_TR_swarm(torrent->swarm, &torrent_arena, torrent->info->pieces_count, torrent->info->piece_length);
 
     torrent->tracker_count = torrent->info->trackers_count;
 
@@ -123,11 +123,15 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
     
 }
 
-void init_TR_swarm(TR_swarm *swarm, Arena *arena)
+void init_TR_swarm(TR_swarm *swarm, Arena *arena, int pieces_count, uint32_t piece_length)
 {
+    int bytes_count = (pieces_count + 7) / 8;
+    swarm->bitfield_slab = arena_push_array_zero(arena, uint8_t, 50 * bytes_count);
+    swarm->bytes_count = bytes_count;
+    swarm->piece_buf_slab = arena_push_array_zero(arena, uint8_t, 50 * piece_length);
+
     for (int i = 0; i < 200; i++)
         swarm->peer_pool[i] = arena_push_struct(arena, TR_peer);
-
     for (int i = 0; i < 50; i++)
         swarm->peers[i] = arena_push_struct(arena, TR_peer);
 

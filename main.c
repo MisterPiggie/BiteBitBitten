@@ -87,7 +87,10 @@ int main(void) {
                 CL_client_tick(&loop);
             } else if (fd == loop.peer_timerfd) 
             {
-                continue;
+                uint64_t exp;
+                read(fd, &exp, 8);
+                for (int j = 0; j < loop.session->torrents_count; j++)
+                    ANN_refill_peers(&loop, loop.session->torrents[j]);
             } else if (fd == loop.udp_socket)
             {
                 UDP_readable(&loop);
@@ -103,7 +106,6 @@ int main(void) {
                     on_peer_connected(&loop, ctx);
                 else if (events[i].events & EPOLLIN)
                     on_peer_readable(&loop, ctx);
-                break;
             }
         }
 
