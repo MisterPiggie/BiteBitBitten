@@ -31,12 +31,6 @@ void init_EV_loop(EV_loop *loop, CL_session *session, CL_threadpool *pool)
 
     loop->udp_socket = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 
-    struct sockaddr_in addr = {
-        .sin_family      = AF_INET,
-        .sin_addr.s_addr = INADDR_ANY,
-        .sin_port        = htons(0),  // OS picks port
-    };
-    assert(bind(loop->udp_socket, (struct sockaddr *)&addr, sizeof(addr)) < 0);
     epoll_add(loop->epollfd, loop->udp_socket, EPOLLIN);
 
     return;

@@ -142,7 +142,7 @@ void CMD_print(CL_session *session, int argc, char **argv)
     printf("\tCreated by: %s\n", torrent->info->created_by);
     printf("\tComment: %s\n", torrent->info->comment);
     printf("\tCreation date: %ld\n", torrent->info->creation_date);
-    printf("\tPieces length: %ld\n", torrent->info->piece_length);
+    printf("\tPieces length: %d\n", torrent->info->piece_length);
     printf("\tTotal size: %ld\n", torrent->info->total_size);
     printf("\tAmount of files: %d\n", torrent->info->files_count);
     printf("\tFiles:\n");

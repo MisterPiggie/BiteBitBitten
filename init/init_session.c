@@ -86,7 +86,7 @@ TR_torrent *init_TR_torrent(BEN_pair *pair)
 {
     int i;
 
-    Arena torrent_arena = arena_create(MB(100));
+    Arena torrent_arena = arena_create(MB(500));
     TR_torrent *torrent = arena_push_struct(&torrent_arena, TR_torrent);
 
     torrent->info = BEN_pairs_to_TR_info(&torrent_arena, pair);

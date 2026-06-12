@@ -231,6 +231,7 @@ void handle_sha1_result(EV_loop *loop, SHA1_verify_result *result)
     TR_torrent *tr   = result->torrent;
     TR_peer    *peer = result->peer;
 
+    printf("PIECE VERIFYING\n");
     if (!result->success)
     {
         tr->requested_pieces[peer->current_piece / 8] &= ~(1 << (7 - peer->current_piece % 8));
@@ -303,11 +304,12 @@ bool write_piece_to_disk(TR_torrent *tr, uint32_t piece_idx, uint8_t *data, uint
         if (written == data_len) 
             break;
     }
+    printf("PIECE WRITTEN\n");
 
     return true;
 }
 
-void handle_disk_result(EV_loop *loop, disk_write_result *result)
+void handle_disk_result(disk_write_result *result)
 {
     TR_torrent *tr = result->torrent;
     int i          = result->piece_idx;

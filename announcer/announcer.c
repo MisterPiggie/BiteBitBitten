@@ -280,6 +280,7 @@ void connect_to_peer(TR_peer *peer, EV_loop *loop, TR_torrent *tr)
     int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     peer->sock = fd;
 
+    printf("CONNECTING TO PEER\n");
 
     struct sockaddr_in peer_addr = 
     {
@@ -343,6 +344,7 @@ void on_peer_connected(EV_loop *loop, TR_peer_ctx *context)
         .data.ptr = &peer->context,
     };
 
+    printf("PEER CONNECTED\n");
     epoll_ctl(loop->epollfd, EPOLL_CTL_MOD, peer->sock, &ev);
 }
 
@@ -351,6 +353,7 @@ void on_peer_readable(EV_loop *loop, TR_peer_ctx *context)
     TR_peer *peer  = context->peer;
     TR_torrent *torrent  = context->tr;
 
+    printf("PEER READABLE\n");
     switch (peer->peer_state)
     {
         case HANDSHAKING:
@@ -368,6 +371,7 @@ void handle_handshake(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
 {
     uint8_t handshake[68];
     ssize_t n = recv(peer->sock, handshake, 68, 0);
+    printf("PEER HANDSHAKE\n");
 
     if (n != 68)
     {
@@ -409,24 +413,29 @@ void handle_message(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
     {
         case 0:  
             peer->bitmask_state |= PEER_CHOKING_US;
+            printf("PEER CHOKING US\n");
             break;
 
         case 1:  
             peer->bitmask_state &= ~PEER_CHOKING_US;
+            printf("PEER UNCHOKING US\n");
             assign_piece_to_peer(peer, tr);
             break;
 
         case 2:  
             peer->bitmask_state |= PEER_INTERESTED_IN_US;
+            printf("PEER INTERESTED US\n");
             break;
 
         case 3:  
             peer->bitmask_state &= ~PEER_INTERESTED_IN_US;
+            printf("PEER UNINTERESTED US\n");
             break;
 
         case 4:  
         {
             uint32_t piece_index;
+            printf("PEER  HAVE\n");
             recv(peer->sock, &piece_index, 4, 0);
             piece_index = ntohl(piece_index);
             peer_set_piece(peer, piece_index);
@@ -438,10 +447,12 @@ void handle_message(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
             int bitfield_len = msg_len - 1;
             recv(peer->sock, peer->bitfield, bitfield_len, 0);
             send_interested(peer);
+            printf("PEER BITFIELD\n");
             break;
         }
 
         case 7:  
+            printf("PEER PIECE\n");
             handle_piece(loop, peer, tr, msg_len);
             break;
 
@@ -511,7 +522,7 @@ void peer_set_piece(TR_peer *peer, uint64_t piece_idx)
 
 void assign_piece_to_peer(TR_peer *peer, TR_torrent *torrent)
 {
-    for (int i = 0; i < torrent->info->pieces_count; i++)
+    for (int i = 0; (uint64_t) i < torrent->info->pieces_count; i++)
     {
         if (torrent->bitfield[i / 8] & (1 << (7 - i % 8)))
             continue;
@@ -535,7 +546,7 @@ void request_all_blocks(TR_peer *peer, TR_torrent *torrent, int piece_idx)
     uint32_t offset;
     uint32_t block_len;
 
-    if (piece_idx == torrent->info->pieces_count - 1)
+    if ((uint32_t) piece_idx == torrent->info->pieces_count - 1)
         piece_size = torrent->info->total_size % torrent->info->piece_length;
     else
         piece_size = torrent->info->piece_length;
@@ -605,7 +616,7 @@ void handle_piece(EV_loop *loop, TR_peer *peer, TR_torrent *tr, uint32_t msg_len
     uint32_t total_blocks = (piece_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
     uint32_t all_received = (1 << total_blocks) - 1;
 
-    if (peer->blocks_received == all_received)
+    if ((uint32_t) peer->blocks_received == all_received)
     {
         piece_task *task = arena_push_struct(&tr->arena, piece_task);
         task->torrent   = tr;

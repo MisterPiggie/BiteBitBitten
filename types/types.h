@@ -132,7 +132,7 @@ typedef struct {
 
     TR_file *files;
     int files_count;
-    int64_t piece_length;
+    uint32_t piece_length;
 
 } TR_info;
 
