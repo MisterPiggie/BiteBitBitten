@@ -60,11 +60,11 @@ void notify_pipe_readable(EV_loop *loop)
             break;
 
         case NOTIFY_SHA1_VERIFY:
-            // handle_sha1_result(loop, &result.sha1);
+            handle_sha1_result(loop, &result.sha1);
             break;
 
         case NOTIFY_DISK_WRITE:
-            // handle_disk_result(loop, &result.disk);
+            handle_disk_result(loop, &result.disk);
             break;
     }
 }
