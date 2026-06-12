@@ -96,6 +96,7 @@ void CMD_add(CL_session *session, int argc, char **argv)
     tmp_torrent->torrent_file_path = arena_push_strf(&tmp_torrent->arena,"%s/%s", session->torrent_dir_path, argv[1]);
     tmp_torrent->bitfield_length = (tmp_torrent->info->pieces_count + 7)/8;
     tmp_torrent->bitfield = arena_push_array_zero(&tmp_torrent->arena, uint8_t, tmp_torrent->bitfield_length);
+    tmp_torrent->requested_pieces = arena_push_array_zero(&tmp_torrent->arena, uint8_t, tmp_torrent->bitfield_length);
 
 
     

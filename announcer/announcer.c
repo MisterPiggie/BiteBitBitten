@@ -243,6 +243,9 @@ void ANN_refill_peers(EV_loop *loop, TR_torrent *tr)
     while (tr->swarm->peers_count < 50 && tr->swarm->pool_count > 0)
     {
         peer = pick_peer(tr->swarm);
+
+        if (peer == NULL)
+            break;
         connect_to_peer(peer, loop, tr);
     }
 }
@@ -258,6 +261,9 @@ TR_peer *pick_peer(TR_swarm *swarm)
         if (peer->peer_state == CONNECTED)
             continue;
 
+        if (peer->peer_state == CONNECTING)
+            continue;
+
         if (time(NULL) - peer->last_tried < 300)
             continue;
 
@@ -271,7 +277,7 @@ TR_peer *pick_peer(TR_swarm *swarm)
         return peer;
     }
     
-    return peer;
+    return NULL;
 }
 
 void connect_to_peer(TR_peer *peer, EV_loop *loop, TR_torrent *tr)
@@ -280,8 +286,7 @@ void connect_to_peer(TR_peer *peer, EV_loop *loop, TR_torrent *tr)
     int fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     peer->sock = fd;
 
-    printf("CONNECTING TO PEER\n");
-
+    printf("CONNECT %d:%u\n", peer->ip, peer->port);
     struct sockaddr_in peer_addr = 
     {
         .sin_family = AF_INET,
@@ -293,6 +298,7 @@ void connect_to_peer(TR_peer *peer, EV_loop *loop, TR_torrent *tr)
     if (ret < 0 && errno != EINPROGRESS)
     {
         close(fd);
+        peer->last_tried = time(NULL);
         return;
     }
 
@@ -322,6 +328,7 @@ void on_peer_connected(EV_loop *loop, TR_peer_ctx *context)
     {
         peer->peer_state = NOT_CONNECTED;
         peer->failed_tries++;
+        peer->last_tried = time(NULL);
         epoll_ctl(loop->epollfd, EPOLL_CTL_DEL, peer->sock, NULL);
         close(peer->sock);
         peer->sock = -1;
@@ -391,7 +398,6 @@ void handle_handshake(EV_loop *loop, TR_peer *peer, TR_torrent *tr)
         return;
     }
 
-    memcpy(loop->session->peer_id, handshake + 48, 20);
 
     peer->peer_state = CONNECTED;
 
@@ -497,6 +503,7 @@ void disconnect_peer(EV_loop *loop, TR_peer *peer)
     peer->blocks_received = 0;
     peer->peer_state = NOT_CONNECTED;
     peer->failed_tries++;
+    peer->last_tried = time(NULL);
 
     memset(peer->bitfield,  0, swarm->bytes_count);
     memset(peer->piece_buf, 0, swarm->piece_length);
