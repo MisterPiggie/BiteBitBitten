@@ -209,6 +209,8 @@ void task_sha1_verify(void *arg)
     piece_task task = *(piece_task *)arg;
     uint8_t hash[20];
 
+    printf("SHA1 task running piece=%u\n", task.piece_idx);
+
     SHA1_hash(task.data, task.data_len, hash);
 
     uint8_t *expected = task.torrent->info->pieces + (task.piece_idx * 20);
@@ -268,7 +270,9 @@ void task_disk_write(void *arg)
     if (write_piece_to_disk(task.torrent, task.piece_idx, task.data, task.data_len))
         result.disk.success = true;
 
-    write(task.pipefd, &result, sizeof(result));
+    printf("SHA1 result success=%d writing to pipe\n", result.sha1.success);
+    ssize_t n = write(task.pipefd, &result, sizeof(result));
+    printf("write returned %zd\n", n);
 }
 
 bool write_piece_to_disk(TR_torrent *tr, uint32_t piece_idx, uint8_t *data, uint32_t data_len)
@@ -309,8 +313,9 @@ bool write_piece_to_disk(TR_torrent *tr, uint32_t piece_idx, uint8_t *data, uint
     return true;
 }
 
-void handle_disk_result(disk_write_result *result)
+void handle_disk_result(EV_loop *loop, disk_write_result *result)
 {
+    (void) loop;
     TR_torrent *tr = result->torrent;
     int i          = result->piece_idx;
 

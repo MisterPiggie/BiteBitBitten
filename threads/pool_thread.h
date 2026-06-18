@@ -112,6 +112,7 @@ void task_disk_write(void *arg);
 size_t curl_write_cb(void *data, size_t size, size_t nmemb, void *userp);
     
 void handle_dns_result(EV_loop *loop, DNS_resolve_result *result);
+void handle_disk_result(EV_loop *loop, disk_write_result *result);
 void handle_HTTP_response(EV_loop *loop, HTTP_announce_result *result);
 void handle_sha1_result(EV_loop *loop, SHA1_verify_result *result);
 bool write_piece_to_disk(TR_torrent *tr, uint32_t piece_idx, uint8_t *data, uint32_t data_len);

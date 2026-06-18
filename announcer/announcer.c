@@ -599,19 +599,19 @@ void handle_piece(EV_loop *loop, TR_peer *peer, TR_torrent *tr, uint32_t msg_len
     uint8_t tmp[BLOCK_SIZE];
     uint32_t block_idx;
 
-    recv(peer->sock, &piece_idx, 4, MSG_WAITALL);
-    recv(peer->sock, &offset,    4, MSG_WAITALL);
+    recv(peer->sock, &piece_idx, 4, 0);
+    recv(peer->sock, &offset,    4, 0);
 
     piece_idx = ntohl(piece_idx);
     offset    = ntohl(offset);
 
     if (piece_idx != (uint32_t)peer->current_piece)
     {
-        recv(peer->sock, tmp, block_len, MSG_WAITALL);
+        recv(peer->sock, tmp, block_len, 0);
         return;
     }
 
-    recv(peer->sock, peer->piece_buf + offset, block_len, MSG_WAITALL);
+    recv(peer->sock, peer->piece_buf + offset, block_len, 0);
 
     block_idx = offset / BLOCK_SIZE;
     peer->blocks_received |= (1 << block_idx);
@@ -621,22 +621,25 @@ void handle_piece(EV_loop *loop, TR_peer *peer, TR_torrent *tr, uint32_t msg_len
         : tr->info->piece_length;
 
     uint32_t total_blocks = (piece_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    uint32_t all_received = (1 << total_blocks) - 1;
+    uint64_t all_received = (1 << total_blocks) - 1;
 
     if ((uint32_t) peer->blocks_received == all_received)
     {
-        piece_task *task = arena_push_struct(&tr->arena, piece_task);
-        task->torrent   = tr;
-        task->peer      = peer;
-        task->piece_idx = piece_idx;
-        task->data_len  = piece_size;
-        task->pipefd    = loop->notify_pipe[1];
-        memcpy(task->data, peer->piece_buf, piece_size);
+        piece_task task =
+        {
+            .torrent   = tr,
+            .peer      = peer,
+            .piece_idx = piece_idx,
+            .data_len  = piece_size,
+            .pipefd    = loop->notify_pipe[1],
+            .data      = peer->piece_buf,
+        };
 
-        threadpool_push(loop->pool, task_sha1_verify, task);
+        threadpool_push(loop->pool, task_sha1_verify, &task);
 
         peer->current_piece   = -1;
-        peer->blocks_received = 0;}
+        peer->blocks_received = 0;
+    }
 }
 
 void send_have(TR_peer *peer, uint32_t piece_idx)

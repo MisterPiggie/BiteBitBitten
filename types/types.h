@@ -185,7 +185,7 @@ struct TR_peer
     int            failed_tries;
 
     int            current_piece;
-    int            blocks_received;
+    uint64_t       blocks_received;
 
     uint8_t        *piece_buf;
 
